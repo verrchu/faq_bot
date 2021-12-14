@@ -1,0 +1,17 @@
+[package]
+name = "faq_bot"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+tools = []
+
+[dependencies.redis]
+version = "0.21"
+default-features = false
+features = ["aio", "cluster", "connection-manager", "tokio-comp"]
+
+[[bin]]
+name = "validate_data"
+path = "bin/validate_data/main.rs"
+required-features = ["tools"]
