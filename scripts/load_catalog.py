@@ -1,19 +1,25 @@
 #! /usr/bin/env python
 
-import argparse
 import os
 import sys
 import logging
 import yaml
 
+from argparse import ArgumentParser
+from hashlib import md5
+from redis import Redis
+from time import time
+
 NAME_FILE = '_name'
 DATA_DIR = '_data'
 ROOT = '/'
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--dry-run', type=bool, default=False)
+parser = ArgumentParser()
+parser.add_argument('--dry-run', action='store_true')
 parser.add_argument('--path', type=str, required=True)
 parser.add_argument('--langs', nargs='+', default=['ru'])
+parser.add_argument('--db-host', type=str, default='localhost')
+parser.add_argument('--db-port', type=int, default=6379)
 parser.add_argument('--log-level',
                     '-l',
                     type=str,
@@ -24,10 +30,18 @@ args = parser.parse_args()
 DRY_RUN = args.dry_run
 LANGS = set(args.langs)
 
+db = Redis(host=args.db_host, port=args.db_port)
+
 
 def process_root(dir):
     logging.info('processing /')
-    load_segment_name(dir, base_dir = dir)
+    load_segment_name(dir, base_dir=dir)
+
+    path_hash = hash(ROOT)
+    logging.debug(f'inserting {ROOT} as {path_hash}')
+    DRY_RUN or db.setnx(path_hash, ROOT)  # set hash -> path
+    DRY_RUN or db.setnx(f'{ROOT}:created',
+                        unixtime())  # set path:created -> unixtime
 
     dir_entries = os.listdir(dir)
     dir_entries.remove(NAME_FILE)
@@ -39,16 +53,26 @@ def process_root(dir):
         abort(f'root is not supposed to containe {DATA_DIR}')
 
     for entry in dir_entries:
+        logging.debug(f'adding {entry} to {ROOT}:next')
+        DRY_RUN or db.sadd(f'{ROOT}:next', os.path.join(ROOT, entry))
+
         entry = os.path.join(dir, entry)
         if not os.path.isdir(entry):
             abort(f'{entry} is not a directory')
 
         process_child(entry, base_dir=dir)
 
+
 def process_child(dir, base_dir):
     root_path = get_root_path(dir, base_dir)
     logging.info(f'processing {root_path}')
     load_segment_name(dir, base_dir)
+
+    path_hash = hash(root_path)
+    logging.debug(f'inserting {root_path} as {path_hash}')
+    DRY_RUN or db.setnx(path_hash, root_path)  # set hash -> path
+    DRY_RUN or db.setnx(f'{root_path}:created',
+                        unixtime())  # set path:created -> unixtime
 
     dir_entries = os.listdir(dir)
     dir_entries.remove(NAME_FILE)
@@ -64,19 +88,26 @@ def process_child(dir, base_dir):
         if len(dir_entries) > 1:
             abort(f'{data_dir} has unexpected neighbours: {dir_entries}')
 
+        logging.debug(f'adding {root_path} to data_entries')
+        DRY_RUN or db.sadd('data_entries', root_path)
+
         load_data(data_dir, base_dir)
 
     for entry in dir_entries:
+        logging.debug(f'adding {entry} to {root_path}:next')
+        DRY_RUN or db.sadd(f'{root_path}:next', os.path.join(root_path, entry))
+
         entry = os.path.join(dir, entry)
         if not os.path.isdir(entry):
             abort(f'{entry} is not a directory')
 
-        process_child(entry, base_dir=dir)
+        process_child(entry, base_dir)
+
 
 def load_data(data_dir, base_dir):
-    root_path = get_root_path(data_dir.rstrip(DATA_DIR), base_dir)
+    root_path = get_root_path(data_dir.removesuffix(DATA_DIR), base_dir)
     logging.info(f'loading data for {root_path}')
-    data_entries = os.listdir(data_dir)
+    data_entries = set(os.listdir(data_dir))
 
     for entry in data_entries:
         entry = os.path.join(data_dir, entry)
@@ -86,6 +117,14 @@ def load_data(data_dir, base_dir):
     for lang in LANGS:
         if not lang in data_entries:
             abort(f'{root_path} has no l10n defined for {lang}')
+        data = open(os.path.join(data_dir, lang), 'r').read()
+        logging.debug(f'loading {root_path} data for {lang}')
+        DRY_RUN or db.set(f'{root_path}:data:{lang}', data)
+
+    diff = data_entries.difference(LANGS)
+    if len(diff):
+        logging.warning(f'{root_path} has unused data entries: {diff}')
+
 
 def load_segment_name(dir, base_dir):
     segment = get_last_path_segment(dir, base_dir)
@@ -98,10 +137,17 @@ def load_segment_name(dir, base_dir):
     name_file = os.path.join(dir, NAME_FILE)
     name_l10n = load_yaml(name_file)
 
+    if not name_l10n:
+        abort(f'entry {dir} has invalid l10n')
+
     langs = set(name_l10n.keys())
     for lang in LANGS:
         if not lang in langs:
             abort(f'segment {segment} has no defined l10n for {lang}')
+        logging.debug(
+            f'loading segment {segment} l10n for {lang}: {name_l10n[lang]}')
+        DRY_RUN or db.set(f'{segment}:name:{lang}', name_l10n[lang])
+
     diff = langs.difference(LANGS)
     if len(diff):
         logging.warning(f'segment {segment} has unused l10n: {diff}')
@@ -111,7 +157,8 @@ def get_root_path(dir, base_dir):
     n_bdir = os.path.normpath(base_dir)
     n_dir = os.path.normpath(dir)
 
-    return n_dir.lstrip(n_bdir)
+    return n_dir.removeprefix(n_bdir)
+
 
 def get_last_path_segment(dir, base_dir):
     if not get_root_path(dir, base_dir) == ROOT:
@@ -128,9 +175,18 @@ def load_yaml(file):
         except yaml.YAMLError as err:
             abort(f'failed to load yaml from {file}: {err}')
 
+
 def abort(reason):
     logging.critical(reason)
     sys.exit(1)
+
+
+def hash(input):
+    return md5(input.encode('utf-8')).hexdigest()
+
+
+def unixtime():
+    return int(time())
 
 
 if __name__ == '__main__':
