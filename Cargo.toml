@@ -1,0 +1,17 @@
+[package]
+name = "faq_bot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+teloxide-core = { version = "0.3", default-features = false, features = ["rustls"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tracing = "0.1"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+once_cell = "1"
+
+[[bin]]
+name = "dev_loop"
+path = "bin/dev_loop/main.rs"

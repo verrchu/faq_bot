@@ -1,0 +1,59 @@
+use std::{env, io::stdout, time::Duration};
+
+use once_cell::sync::Lazy;
+use teloxide_core::{
+    payloads::setters::*,
+    requests::{Request, Requester},
+    types::AllowedUpdate,
+    Bot,
+};
+
+use tracing_subscriber::EnvFilter;
+
+static TOKEN: Lazy<String> = Lazy::new(|| env::var("TOKEN").expect("TOKEN not provided"));
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let (writer, _guard) = tracing_appender::non_blocking(stdout());
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .with_writer(writer)
+        .init();
+
+    run().await
+}
+
+async fn run() -> anyhow::Result<()> {
+    let bot = Bot::new(&*TOKEN);
+
+    let mut offset = 0;
+    let mut get_updates = bot
+        .get_updates()
+        .allowed_updates([AllowedUpdate::Message, AllowedUpdate::CallbackQuery]);
+
+    loop {
+        tracing::debug!("getting updates");
+
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        let updates = get_updates.send_ref().await;
+
+        match updates {
+            Ok(updates) => {
+                tracing::debug!("fetched updates: {:?}", updates);
+                if !updates.is_empty() {
+                    tracing::info!("fetched {} updates", updates.len());
+                }
+
+                for update in updates.iter() {
+                    if update.id >= offset {
+                        offset = update.id + 1;
+                        get_updates.offset = Some(offset);
+                    }
+                }
+            }
+            Err(err) => {
+                tracing::error!("failed to get updates: {:?}", err);
+            }
+        }
+    }
+}
