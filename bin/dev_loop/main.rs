@@ -2,11 +2,14 @@ use std::{env, io::stdout, time::Duration};
 
 use once_cell::sync::Lazy;
 use teloxide_core::{
+    adaptors::DefaultParseMode,
     payloads::setters::*,
     requests::{Request, Requester},
-    types::AllowedUpdate,
+    types::{AllowedUpdate, ParseMode},
     Bot,
 };
+
+use bot as handler;
 
 use tracing_subscriber::EnvFilter;
 
@@ -24,7 +27,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn run() -> anyhow::Result<()> {
-    let bot = Bot::new(&*TOKEN);
+    let bot = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
 
     let mut offset = 0;
     let mut get_updates = bot
@@ -48,6 +51,10 @@ async fn run() -> anyhow::Result<()> {
                     if update.id >= offset {
                         offset = update.id + 1;
                         get_updates.offset = Some(offset);
+                    }
+
+                    if let Err(err) = handler::process_update(&bot, update).await {
+                        tracing::error!("failed to process update: {:?}", err);
                     }
                 }
             }
