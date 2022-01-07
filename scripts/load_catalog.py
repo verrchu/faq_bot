@@ -157,7 +157,8 @@ def get_root_path(dir, base_dir):
     n_bdir = os.path.normpath(base_dir)
     n_dir = os.path.normpath(dir)
 
-    return n_dir.removeprefix(n_bdir)
+    diff = n_dir.removeprefix(n_bdir)
+    return diff if diff else '/'
 
 
 def get_last_path_segment(dir, base_dir):

@@ -1,6 +1,5 @@
-use crate::{grid, utils};
+use crate::{grid, utils, Db};
 
-use redis::aio::ConnectionManager;
 use teloxide_core::{
     payloads::setters::*,
     requests::{Request, Requester},
@@ -11,7 +10,7 @@ use teloxide_core::{
 pub async fn handle_message<R: Requester<Err = RequestError>>(
     bot: R,
     message: &Message,
-    db: ConnectionManager,
+    db: Db,
 ) -> anyhow::Result<()> {
     if let (Some(user), Some(text)) = (message.from(), message.text()) {
         match text {

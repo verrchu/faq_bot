@@ -1,13 +1,12 @@
-use redis::aio::ConnectionManager;
-use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
+use crate::{utils, Db};
 
-use crate::utils;
+use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
 static LANG: &str = "ru";
 
 pub async fn goto(
     hash: String,
-    db: ConnectionManager,
+    db: Db,
 ) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
     let buttons = InlineKeyboardMarkup::new(navigation("test"));
 
