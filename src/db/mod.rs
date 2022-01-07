@@ -36,4 +36,12 @@ impl Db {
             .map(PathBuf::from)
             .map_err(anyhow::Error::from)
     }
+
+    pub async fn get_next_keys(&mut self, key: &str) -> anyhow::Result<Vec<PathBuf>> {
+        self.conn
+            .smembers::<_, Vec<String>>(format!("{}:next", key))
+            .await
+            .map(|keys| keys.into_iter().map(PathBuf::from).collect())
+            .map_err(anyhow::Error::from)
+    }
 }

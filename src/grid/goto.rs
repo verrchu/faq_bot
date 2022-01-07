@@ -9,16 +9,32 @@ static LANG: &str = "ru";
 
 pub async fn goto(hash: String, mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
     let key = db.get_key(&hash).await?;
-    let components = key.components().collect::<Vec<_>>();
 
     let header = db.get_grid_header(&hash, LANG).await?;
 
     let mut buttons = vec![];
 
-    if components.len() > 1 {
-        buttons.append(&mut navigation(
-            components.last().unwrap().as_os_str().to_str().unwrap(),
-        ));
+    let mut next_buttons = db
+        .get_next_keys(&key.to_str().unwrap())
+        .await?
+        .iter()
+        .map(|next_key| {
+            let last_segment = next_key
+                .strip_prefix(&key)
+                .map_err(anyhow::Error::from)
+                .map(|next_key| next_key.to_str().unwrap())?;
+
+            Ok(vec![InlineKeyboardButton::new(
+                last_segment.to_string(),
+                InlineKeyboardButtonKind::CallbackData(cb_data(next_key.to_str().unwrap())),
+            )])
+        })
+        .collect::<anyhow::Result<Vec<Vec<InlineKeyboardButton>>>>()?;
+
+    buttons.append(&mut next_buttons);
+
+    if key.as_path() != Path::new("/") {
+        buttons.append(&mut navigation(key.to_str().unwrap()));
     }
 
     let buttons = InlineKeyboardMarkup::new(buttons);
