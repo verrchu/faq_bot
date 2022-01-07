@@ -44,4 +44,11 @@ impl Db {
             .map(|keys| keys.into_iter().map(PathBuf::from).collect())
             .map_err(anyhow::Error::from)
     }
+
+    pub async fn get_segment_name(&mut self, segment: &str, lang: &str) -> anyhow::Result<String> {
+        self.conn
+            .get(format!("{}:name:{}", segment, lang))
+            .await
+            .map_err(anyhow::Error::from)
+    }
 }
