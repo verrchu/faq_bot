@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::PathBuf;
 
 use crate::{utils, Db};
 
@@ -7,8 +7,9 @@ use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, Inlin
 
 static LANG: &str = "ru";
 
-pub async fn goto(hash: String, mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
+pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
     let key = db.get_key(&hash).await?;
+    let components_count = key.components().count();
 
     let header = db.get_grid_header(&hash, LANG).await?;
 
@@ -33,8 +34,9 @@ pub async fn goto(hash: String, mut db: Db) -> anyhow::Result<(String, InlineKey
 
     buttons.append(&mut next_buttons);
 
-    if key.as_path() != Path::new("/") {
-        buttons.append(&mut navigation(key.to_str().unwrap()));
+    if components_count > 1 {
+        let previous_key = PathBuf::from_iter(key.components().take(components_count - 1));
+        buttons.append(&mut navigation(previous_key.to_str().unwrap()));
     }
 
     let buttons = InlineKeyboardMarkup::new(buttons);

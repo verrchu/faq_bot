@@ -15,7 +15,7 @@ pub async fn handle_message<R: Requester<Err = RequestError>>(
     if let (Some(user), Some(text)) = (message.from(), message.text()) {
         match text {
             "/start" => {
-                let (header, keyboard) = grid::goto(utils::hash("/"), db).await?;
+                let (header, keyboard) = grid::goto(utils::hash("/").as_str(), db).await?;
 
                 bot.send_message(user.id, header)
                     .reply_markup(keyboard)
