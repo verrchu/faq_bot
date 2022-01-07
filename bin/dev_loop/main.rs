@@ -1,5 +1,12 @@
+mod args;
+use args::Args;
+
+mod config;
+use config::Config;
+
 use std::{env, io::stdout, time::Duration};
 
+use clap::Parser;
 use once_cell::sync::Lazy;
 use teloxide_core::{
     adaptors::DefaultParseMode,
@@ -23,10 +30,15 @@ async fn main() -> anyhow::Result<()> {
         .with_writer(writer)
         .init();
 
-    run().await
+    let args = Args::parse();
+    let config = Config::load(args.config)?;
+
+    tracing::info!("starting with config: {:?}", config);
+
+    run(config).await
 }
 
-async fn run() -> anyhow::Result<()> {
+async fn run(config: Config) -> anyhow::Result<()> {
     let bot = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
 
     let mut offset = 0;
@@ -37,7 +49,7 @@ async fn run() -> anyhow::Result<()> {
     loop {
         tracing::debug!("getting updates");
 
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(config.interval).await;
         let updates = get_updates.send_ref().await;
 
         match updates {
