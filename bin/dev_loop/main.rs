@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
 async fn run(config: Config) -> anyhow::Result<()> {
     let bot = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
 
-    let db = bot::Db::connect(config.db.host, config.db.port).await?;
+    let db = bot::Db::connect(config.db.host, config.db.port, config.db.scripts_path).await?;
 
     let mut offset = 0;
     let mut get_updates = bot

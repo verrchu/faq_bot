@@ -13,6 +13,7 @@ pub struct Config {
 pub struct DbConfig {
     pub host: Ipv4Addr,
     pub port: u16,
+    pub scripts_path: PathBuf,
 }
 
 impl Config {

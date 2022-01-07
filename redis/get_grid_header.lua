@@ -1,5 +1,9 @@
 local key = redis.pcall('get', ARGV[1])
 
+if not key then
+    return false
+end
+
 if key == '/' then
     local name_key = string.gsub('/:name:$lang', '%$(%w+)', {lang=ARGV[2]})
     return redis.pcall('get', name_key)
