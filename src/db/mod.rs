@@ -72,4 +72,18 @@ impl Db {
             .await
             .map_err(anyhow::Error::from)
     }
+
+    pub async fn is_data_entry(&mut self, key: &str) -> anyhow::Result<bool> {
+        self.conn
+            .sismember("data_entries", key)
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
+    pub async fn get_key_data(&mut self, key: &str, lang: &str) -> anyhow::Result<String> {
+        self.conn
+            .get(format!("{}:data:{}", key, lang))
+            .await
+            .map_err(anyhow::Error::from)
+    }
 }
