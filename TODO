@@ -1,4 +1,3 @@
-separate grid::init and grid::goto
 answer callback query
 handle data entries
 store hashes in a hash

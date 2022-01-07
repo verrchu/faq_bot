@@ -2,20 +2,19 @@ use std::path::PathBuf;
 
 use crate::{utils, Db};
 
-use redis::Commands;
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
 static LANG: &str = "ru";
 
 pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
-    let key = db.get_key(&hash).await?;
+    let key = db.get_key(hash).await?;
     let components_count = key.components().count();
 
-    let header = db.get_grid_header(&hash, LANG).await?;
+    let header = db.get_grid_header(hash, LANG).await?;
 
     let mut buttons = vec![];
 
-    let next_keys = db.get_next_keys(&key.to_str().unwrap()).await?;
+    let next_keys = db.get_next_keys(key.to_str().unwrap()).await?;
     let next_segments = next_keys
         .iter()
         .map(|next_key| {

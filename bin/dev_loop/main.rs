@@ -4,11 +4,10 @@ use args::Args;
 mod config;
 use config::Config;
 
-use std::{env, io::stdout, time::Duration};
+use std::{env, io::stdout};
 
 use clap::Parser;
 use once_cell::sync::Lazy;
-use redis::{aio::ConnectionManager, Client};
 use teloxide_core::{
     adaptors::DefaultParseMode,
     payloads::setters::*,

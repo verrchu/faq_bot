@@ -71,9 +71,5 @@ impl Db {
             .query_async(&mut self.conn)
             .await
             .map_err(anyhow::Error::from)
-        // self.conn
-        //     .get(format!("{}:name:{}", segment, lang))
-        //     .await
-        //     .map_err(anyhow::Error::from)
     }
 }

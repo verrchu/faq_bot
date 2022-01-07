@@ -1,4 +1,4 @@
-use std::{fs::File, path::PathBuf};
+use std::{path::PathBuf};
 
 use super::Db;
 
@@ -11,7 +11,7 @@ pub(super) struct Scripts {
 impl Scripts {
     pub(super) fn load(path: PathBuf) -> anyhow::Result<Self> {
         Ok(Self {
-            get_grid_header: load_script(path.clone(), "get_grid_header")?,
+            get_grid_header: load_script(path, "get_grid_header")?,
         })
     }
 }

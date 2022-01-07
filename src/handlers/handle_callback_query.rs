@@ -12,11 +12,11 @@ pub async fn handle_callback_query<R: Requester<Err = RequestError>>(
     cb: &CallbackQuery,
     db: Db,
 ) -> anyhow::Result<()> {
-    if let Some(data) = &cb.data {
+    if let (Some(msg), Some(data)) = (&cb.message, &cb.data) {
         if let Some(hash) = data.strip_prefix("/goto#") {
             let (header, keyboard) = grid::goto(hash, db).await?;
 
-            bot.send_message(cb.from.id, header)
+            bot.edit_message_text(cb.from.id, msg.id, header)
                 .reply_markup(keyboard)
                 .send()
                 .await?;

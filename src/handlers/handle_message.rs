@@ -1,4 +1,4 @@
-use crate::{grid, utils, Db};
+use crate::{grid, Db};
 
 use teloxide_core::{
     payloads::setters::*,
@@ -15,7 +15,7 @@ pub async fn handle_message<R: Requester<Err = RequestError>>(
     if let (Some(user), Some(text)) = (message.from(), message.text()) {
         match text {
             "/start" => {
-                let (header, keyboard) = grid::goto(utils::hash("/").as_str(), db).await?;
+                let (header, keyboard) = grid::init(db).await?;
 
                 bot.send_message(user.id, header)
                     .reply_markup(keyboard)
