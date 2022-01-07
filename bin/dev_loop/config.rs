@@ -1,4 +1,4 @@
-use std::{net::Ipv4Addr, path::PathBuf, time::Duration, fs::File};
+use std::{fs::File, net::Ipv4Addr, path::PathBuf, time::Duration};
 
 use serde::{Deserialize, Serialize};
 

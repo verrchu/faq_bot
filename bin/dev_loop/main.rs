@@ -8,6 +8,7 @@ use std::{env, io::stdout, time::Duration};
 
 use clap::Parser;
 use once_cell::sync::Lazy;
+use redis::{aio::ConnectionManager, Client};
 use teloxide_core::{
     adaptors::DefaultParseMode,
     payloads::setters::*,
@@ -41,6 +42,15 @@ async fn main() -> anyhow::Result<()> {
 async fn run(config: Config) -> anyhow::Result<()> {
     let bot = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
 
+    let db = {
+        tracing::info!("establishing db connection");
+        let client = Client::open((config.db.host.to_string(), config.db.port))
+            .map_err(anyhow::Error::from)?;
+        ConnectionManager::new(client)
+            .await
+            .map_err(anyhow::Error::from)?
+    };
+
     let mut offset = 0;
     let mut get_updates = bot
         .get_updates()
@@ -65,7 +75,7 @@ async fn run(config: Config) -> anyhow::Result<()> {
                         get_updates.offset = Some(offset);
                     }
 
-                    if let Err(err) = handler::process_update(&bot, update).await {
+                    if let Err(err) = handler::process_update(&bot, update, db.clone()).await {
                         tracing::error!("failed to process update: {:?}", err);
                     }
                 }
