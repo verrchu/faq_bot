@@ -25,5 +25,7 @@ pub async fn handle_callback_query<R: Requester<Err = RequestError>>(
         }
     }
 
+    bot.answer_callback_query(&cb.id).send().await?;
+
     Ok(())
 }
