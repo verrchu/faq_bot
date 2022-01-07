@@ -15,22 +15,29 @@ pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeybo
 
     let mut buttons = vec![];
 
-    let mut next_buttons = db
-        .get_next_keys(&key.to_str().unwrap())
-        .await?
+    let next_keys = db.get_next_keys(&key.to_str().unwrap()).await?;
+    let next_segments = next_keys
         .iter()
         .map(|next_key| {
-            let last_segment = next_key
+            next_key
                 .strip_prefix(&key)
                 .map_err(anyhow::Error::from)
-                .map(|next_key| next_key.to_str().unwrap())?;
-
-            Ok(vec![InlineKeyboardButton::new(
-                last_segment.to_string(),
-                InlineKeyboardButtonKind::CallbackData(cb_data(next_key.to_str().unwrap())),
-            )])
+                .map(|next_key| next_key.to_str().unwrap())
         })
-        .collect::<anyhow::Result<Vec<Vec<InlineKeyboardButton>>>>()?;
+        .collect::<anyhow::Result<Vec<_>>>()?;
+
+    let mut next_buttons = db
+        .get_segment_names(&next_segments, LANG)
+        .await?
+        .into_iter()
+        .zip(next_keys.into_iter())
+        .map(|(name, key)| {
+            vec![InlineKeyboardButton::new(
+                name,
+                InlineKeyboardButtonKind::CallbackData(cb_data(key.to_str().unwrap())),
+            )]
+        })
+        .collect::<Vec<Vec<InlineKeyboardButton>>>();
 
     buttons.append(&mut next_buttons);
 

@@ -51,4 +51,29 @@ impl Db {
             .await
             .map_err(anyhow::Error::from)
     }
+
+    pub async fn get_segment_names<I, S>(
+        &mut self,
+        segments: I,
+        lang: &str,
+    ) -> anyhow::Result<Vec<String>>
+    where
+        S: AsRef<str>,
+        I: IntoIterator<Item = S>,
+    {
+        let keys = segments
+            .into_iter()
+            .map(|segment| format!("{}:name:{}", segment.as_ref(), lang))
+            .collect::<Vec<_>>();
+
+        redis::cmd("MGET")
+            .arg(keys)
+            .query_async(&mut self.conn)
+            .await
+            .map_err(anyhow::Error::from)
+        // self.conn
+        //     .get(format!("{}:name:{}", segment, lang))
+        //     .await
+        //     .map_err(anyhow::Error::from)
+    }
 }
