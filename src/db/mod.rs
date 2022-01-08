@@ -77,6 +77,23 @@ impl Db {
             .map_err(anyhow::Error::from)
     }
 
+    pub async fn get_key_icons<I, S>(&mut self, keys: I) -> anyhow::Result<Vec<Option<String>>>
+    where
+        S: AsRef<str>,
+        I: IntoIterator<Item = S>,
+    {
+        let keys = keys
+            .into_iter()
+            .map(|key| format!("{}:icon", key.as_ref()))
+            .collect::<Vec<_>>();
+
+        redis::cmd("MGET")
+            .arg(keys)
+            .query_async(&mut self.conn)
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
     pub async fn is_data_entry(&mut self, key: &str) -> anyhow::Result<bool> {
         self.conn
             .sismember("data_entries", key)

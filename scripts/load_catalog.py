@@ -67,6 +67,7 @@ def process_child(dir, base_dir):
     root_path = get_root_path(dir, base_dir)
     logging.info(f'processing {root_path}')
     load_segment_name(dir, base_dir)
+    load_key_icon(dir, base_dir)
 
     path_hash = hash(root_path)
     logging.debug(f'inserting {root_path} as {path_hash}')
@@ -126,6 +127,25 @@ def load_data(data_dir, base_dir):
         logging.warning(f'{root_path} has unused data entries: {diff}')
 
 
+def load_key_icon(dir, base_dir):
+    root_path = get_root_path(dir, base_dir)
+
+    dir_entries = os.listdir(dir)
+    if not NAME_FILE in dir_entries:
+        abort(f'entry {dir} has no {NAME_FILE}')
+
+    name_file = os.path.join(dir, NAME_FILE)
+    name_file = load_yaml(name_file)
+
+    if not name_file:
+        abort(f'entry {dir} has invalid {NAME_FILE}')
+
+    if 'icon' in name_file:
+        icon = name_file['icon']
+        logging.info(f'loading icon {icon} for {root_path}')
+        DRY_RUN or db.set(f'{root_path}:icon', icon)
+
+
 def load_segment_name(dir, base_dir):
     segment = get_last_path_segment(dir, base_dir)
     logging.info(f'loading segment {segment} name')
@@ -135,10 +155,12 @@ def load_segment_name(dir, base_dir):
         abort(f'entry {dir} has no {NAME_FILE}')
 
     name_file = os.path.join(dir, NAME_FILE)
-    name_l10n = load_yaml(name_file)
+    name_file = load_yaml(name_file)
 
-    if not name_l10n:
-        abort(f'entry {dir} has invalid l10n')
+    if not name_file:
+        abort(f'entry {dir} has invalid {NAME_FILE}')
+
+    name_l10n = name_file['l10n']
 
     langs = set(name_l10n.keys())
     for lang in LANGS:

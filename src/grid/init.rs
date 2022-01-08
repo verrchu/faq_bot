@@ -1,5 +1,7 @@
+use super::{callback, utils::format_segment};
 use crate::{utils, Db, Lang};
 
+use futures::try_join;
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
 pub async fn init(mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
@@ -15,28 +17,41 @@ pub async fn init(mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> 
             next_key
                 .strip_prefix(&key)
                 .map_err(anyhow::Error::from)
-                .map(|next_key| next_key.to_str().unwrap())
+                .map(|next_key| next_key.to_str().unwrap().to_string())
         })
         .collect::<anyhow::Result<Vec<_>>>()?;
 
-    let buttons = db
-        .get_segment_names(&next_segments, Lang::Ru)
-        .await?
+    let next_keys = next_keys
         .into_iter()
-        .zip(next_keys.into_iter())
-        .map(|(name, key)| {
+        .map(|key| key.to_str().unwrap().to_string())
+        .collect::<Vec<_>>();
+
+    let (segment_names, key_icons) = {
+        let mut db1 = db.clone();
+        let mut db2 = db.clone();
+
+        try_join!(
+            db1.get_segment_names(&next_segments, Lang::Ru),
+            db2.get_key_icons(next_keys.clone()),
+        )
+    }?;
+
+    let next_buttons = segment_names
+        .iter()
+        .zip(key_icons.iter())
+        .zip(next_keys.iter())
+        .map(|((name, icon), key)| {
             vec![InlineKeyboardButton::new(
-                name,
-                InlineKeyboardButtonKind::CallbackData(cb_data(key.to_str().unwrap())),
+                format_segment(name, icon.as_ref()),
+                InlineKeyboardButtonKind::CallbackData(callback::data(
+                    callback::Command::Goto,
+                    key,
+                )),
             )]
         })
         .collect::<Vec<Vec<InlineKeyboardButton>>>();
 
-    let buttons = InlineKeyboardMarkup::new(buttons);
+    let next_buttons = InlineKeyboardMarkup::new(next_buttons);
 
-    Ok((header, buttons))
-}
-
-fn cb_data(goto: &str) -> String {
-    format!("/goto#{}", utils::hash(goto))
+    Ok((header, next_buttons))
 }
