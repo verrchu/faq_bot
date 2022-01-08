@@ -1,8 +1,4 @@
-local key = redis.pcall('hget', 'key_hashes', ARGV[1])
-
-if not key then
-    return false
-end
+local key = ARGV[1]
 
 if key == '/' then
     local name_key = string.gsub('/:name:$lang', '%$(%w+)', {lang=ARGV[2]})

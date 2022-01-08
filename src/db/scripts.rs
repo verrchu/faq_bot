@@ -25,11 +25,13 @@ fn load_script(mut path: PathBuf, name: &str) -> anyhow::Result<Script> {
 }
 
 impl Db {
-    pub async fn get_grid_header(&mut self, hash: &str, lang: Lang) -> anyhow::Result<String> {
+    pub async fn get_grid_header(&mut self, key: &str, lang: &Lang) -> anyhow::Result<String> {
+        tracing::debug!(key, lang = lang.as_str(), "call get_grid_header");
+
         let mut invocation = self.scripts.get_grid_header.prepare_invoke();
 
         invocation
-            .arg(hash)
+            .arg(key)
             .arg(lang.to_string())
             .invoke_async(&mut self.conn)
             .await

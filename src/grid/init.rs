@@ -1,14 +1,13 @@
 use super::{callback, utils::format_segment};
-use crate::{utils, Db, Lang};
+use crate::{Db, Lang};
 
 use futures::try_join;
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
 pub async fn init(mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
     let key = "/";
-    let hash = utils::hash(key);
 
-    let header = db.get_grid_header(&hash, Lang::Ru).await?;
+    let header = db.get_grid_header(key, &Lang::Ru).await?;
 
     let next_keys = db.get_next_keys(key).await?;
     let next_segments = next_keys
@@ -31,7 +30,7 @@ pub async fn init(mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> 
         let mut db2 = db.clone();
 
         try_join!(
-            db1.get_segment_names(&next_segments, Lang::Ru),
+            db1.get_segment_names(&next_segments, &Lang::Ru),
             db2.get_key_icons(next_keys.clone()),
         )
     }?;

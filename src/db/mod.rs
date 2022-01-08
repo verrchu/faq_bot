@@ -5,6 +5,7 @@ use crate::Lang;
 
 use std::{net::Ipv4Addr, path::PathBuf, sync::Arc};
 
+use function_name::named;
 use redis::{aio::ConnectionManager, AsyncCommands, Client};
 
 #[derive(Clone)]
@@ -31,8 +32,9 @@ impl Db {
 }
 
 impl Db {
+    #[named]
     pub async fn get_key(&mut self, hash: &str) -> anyhow::Result<PathBuf> {
-        tracing::debug!("getting key (hash: {})", hash);
+        tracing::debug!(hash, "call {}", function_name!());
 
         self.conn
             .hget::<_, _, String>("key_hashes", hash)
@@ -41,7 +43,10 @@ impl Db {
             .map_err(anyhow::Error::from)
     }
 
+    #[named]
     pub async fn get_next_keys(&mut self, key: &str) -> anyhow::Result<Vec<PathBuf>> {
+        tracing::debug!(key, "call {}", function_name!());
+
         self.conn
             .smembers::<_, Vec<String>>(format!("{}:next", key))
             .await
@@ -49,39 +54,38 @@ impl Db {
             .map_err(anyhow::Error::from)
     }
 
-    pub async fn get_segment_name(&mut self, segment: &str, lang: Lang) -> anyhow::Result<String> {
-        self.conn
-            .get(format!("{}:name:{}", segment, lang))
-            .await
-            .map_err(anyhow::Error::from)
-    }
-
+    #[named]
     pub async fn get_segment_names<I, S>(
         &mut self,
         segments: I,
-        lang: Lang,
+        lang: &Lang,
     ) -> anyhow::Result<Vec<String>>
     where
         S: AsRef<str>,
         I: IntoIterator<Item = S>,
     {
-        let keys = segments
+        tracing::debug!(lang = lang.as_str(), "call {}", function_name!());
+
+        let segments = segments
             .into_iter()
             .map(|segment| format!("{}:name:{}", segment.as_ref(), lang))
             .collect::<Vec<_>>();
 
         redis::cmd("MGET")
-            .arg(keys)
+            .arg(segments)
             .query_async(&mut self.conn)
             .await
             .map_err(anyhow::Error::from)
     }
 
+    #[named]
     pub async fn get_key_icons<I, S>(&mut self, keys: I) -> anyhow::Result<Vec<Option<String>>>
     where
         S: AsRef<str>,
         I: IntoIterator<Item = S>,
     {
+        tracing::debug!("call {}", function_name!());
+
         let keys = keys
             .into_iter()
             .map(|key| format!("{}:icon", key.as_ref()))
@@ -94,28 +98,40 @@ impl Db {
             .map_err(anyhow::Error::from)
     }
 
+    #[named]
     pub async fn is_data_entry(&mut self, key: &str) -> anyhow::Result<bool> {
+        tracing::debug!(key, "call {}", function_name!());
+
         self.conn
             .sismember("data_entries", key)
             .await
             .map_err(anyhow::Error::from)
     }
 
-    pub async fn get_key_data(&mut self, key: &str, lang: Lang) -> anyhow::Result<String> {
+    #[named]
+    pub async fn get_key_data(&mut self, key: &str, lang: &Lang) -> anyhow::Result<String> {
+        tracing::debug!(key, lang = lang.as_str(), "call {}", function_name!());
+
         self.conn
             .get(format!("{}:data:{}", key, lang))
             .await
             .map_err(anyhow::Error::from)
     }
 
+    #[named]
     pub async fn get_key_created(&mut self, key: &str) -> anyhow::Result<u64> {
+        tracing::debug!(key, "call {}", function_name!());
+
         self.conn
             .get(format!("{}:created", key))
             .await
             .map_err(anyhow::Error::from)
     }
 
+    #[named]
     pub async fn inc_views(&mut self, key: &str) -> anyhow::Result<u64> {
+        tracing::info!(key, "call {}", function_name!());
+
         self.conn
             .incr(format!("{}:views", key), 1)
             .await

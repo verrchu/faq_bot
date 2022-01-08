@@ -6,6 +6,7 @@ use teloxide_core::{
     types::Message,
     RequestError,
 };
+use tracing::Instrument;
 
 pub async fn handle_message<R: Requester<Err = RequestError>>(
     bot: R,
@@ -13,14 +14,26 @@ pub async fn handle_message<R: Requester<Err = RequestError>>(
     db: Db,
 ) -> anyhow::Result<()> {
     if let (Some(user), Some(text)) = (message.from(), message.text()) {
+        let username = user.username.as_ref().map(AsRef::<str>::as_ref);
+
         match text {
             "/start" => {
-                let (header, keyboard) = grid::init(db).await?;
+                let span = tracing::info_span!("handle_message", username, text, message.id);
 
-                bot.send_message(user.id, header)
-                    .reply_markup(keyboard)
-                    .send()
-                    .await?;
+                let block = async {
+                    let (header, keyboard) = grid::init(db)
+                        .instrument(tracing::info_span!("grid_init"))
+                        .await?;
+
+                    bot.send_message(user.id, header)
+                        .reply_markup(keyboard)
+                        .send()
+                        .await
+                        .map(|_| ())
+                        .map_err(anyhow::Error::from)
+                };
+
+                block.instrument(span).await?;
             }
             _ => tracing::warn!("unexpected message: {}", text),
         }
