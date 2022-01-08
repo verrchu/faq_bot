@@ -1,19 +1,29 @@
+use crate::Lang;
+
 use serde::{Deserialize, Serialize};
 use tera::Tera;
 
-static TEMPLATE: &str = r#"
+static RU: &str = r#"
 {{ header }}
 
 {{ data }}
+
+_Опубликовано: {{ created }}_
 "#;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Context {
     pub header: String,
     pub data: String,
+    pub created: String,
 }
 
-pub fn render(context: Context) -> anyhow::Result<String> {
+pub fn render(context: Context, lang: Lang) -> anyhow::Result<String> {
     let context = tera::Context::from_serialize(context).map_err(anyhow::Error::from)?;
-    Tera::one_off(TEMPLATE, &context, false).map_err(anyhow::Error::from)
+
+    let template = match lang {
+        Lang::Ru => RU,
+    };
+
+    Tera::one_off(template, &context, false).map_err(anyhow::Error::from)
 }

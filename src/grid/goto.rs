@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use super::callback;
-use crate::{templates, Db, Lang};
+use crate::{templates, utils, Db, Lang};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
@@ -16,6 +16,10 @@ pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeybo
 
     if db.is_data_entry(key.to_str().unwrap()).await? {
         let data = db.get_key_data(key.to_str().unwrap(), Lang::Ru).await?;
+        let created = db
+            .get_key_created(key.to_str().unwrap())
+            .await
+            .map(utils::unixtime_to_datetime)?;
 
         text = {
             use templates::data_entry::Context;
@@ -23,8 +27,9 @@ pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeybo
             let context = Context {
                 header: header.clone(),
                 data,
+                created,
             };
-            templates::data_entry::render(context)?
+            templates::data_entry::render(context, Lang::Ru)?
         };
     } else {
         let next_keys = db.get_next_keys(key.to_str().unwrap()).await?;

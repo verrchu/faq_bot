@@ -88,4 +88,11 @@ impl Db {
             .await
             .map_err(anyhow::Error::from)
     }
+
+    pub async fn get_key_created(&mut self, key: &str) -> anyhow::Result<u64> {
+        self.conn
+            .get(format!("{}:created", key))
+            .await
+            .map_err(anyhow::Error::from)
+    }
 }
