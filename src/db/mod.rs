@@ -1,6 +1,8 @@
 mod scripts;
 use scripts::Scripts;
 
+use crate::Lang;
+
 use std::{net::Ipv4Addr, path::PathBuf, sync::Arc};
 
 use redis::{aio::ConnectionManager, AsyncCommands, Client};
@@ -45,7 +47,7 @@ impl Db {
             .map_err(anyhow::Error::from)
     }
 
-    pub async fn get_segment_name(&mut self, segment: &str, lang: &str) -> anyhow::Result<String> {
+    pub async fn get_segment_name(&mut self, segment: &str, lang: Lang) -> anyhow::Result<String> {
         self.conn
             .get(format!("{}:name:{}", segment, lang))
             .await
@@ -55,7 +57,7 @@ impl Db {
     pub async fn get_segment_names<I, S>(
         &mut self,
         segments: I,
-        lang: &str,
+        lang: Lang,
     ) -> anyhow::Result<Vec<String>>
     where
         S: AsRef<str>,
@@ -80,7 +82,7 @@ impl Db {
             .map_err(anyhow::Error::from)
     }
 
-    pub async fn get_key_data(&mut self, key: &str, lang: &str) -> anyhow::Result<String> {
+    pub async fn get_key_data(&mut self, key: &str, lang: Lang) -> anyhow::Result<String> {
         self.conn
             .get(format!("{}:data:{}", key, lang))
             .await

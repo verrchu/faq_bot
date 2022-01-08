@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use super::Db;
+use crate::Lang;
 
 use redis::Script;
 
@@ -24,12 +25,12 @@ fn load_script(mut path: PathBuf, name: &str) -> anyhow::Result<Script> {
 }
 
 impl Db {
-    pub async fn get_grid_header(&mut self, hash: &str, lang: &str) -> anyhow::Result<String> {
+    pub async fn get_grid_header(&mut self, hash: &str, lang: Lang) -> anyhow::Result<String> {
         let mut invocation = self.scripts.get_grid_header.prepare_invoke();
 
         invocation
             .arg(hash)
-            .arg(lang)
+            .arg(lang.to_string())
             .invoke_async(&mut self.conn)
             .await
             .map_err(anyhow::Error::from)

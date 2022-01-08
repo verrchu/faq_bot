@@ -1,14 +1,12 @@
-use crate::{utils, Db};
+use crate::{utils, Db, Lang};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
-
-static LANG: &str = "ru";
 
 pub async fn init(mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
     let key = "/";
     let hash = utils::hash(key);
 
-    let header = db.get_grid_header(&hash, LANG).await?;
+    let header = db.get_grid_header(&hash, Lang::Ru).await?;
 
     let next_keys = db.get_next_keys(key).await?;
     let next_segments = next_keys
@@ -22,7 +20,7 @@ pub async fn init(mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> 
         .collect::<anyhow::Result<Vec<_>>>()?;
 
     let buttons = db
-        .get_segment_names(&next_segments, LANG)
+        .get_segment_names(&next_segments, Lang::Ru)
         .await?
         .into_iter()
         .zip(next_keys.into_iter())

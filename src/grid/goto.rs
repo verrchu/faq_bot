@@ -1,22 +1,21 @@
 use std::path::PathBuf;
 
-use crate::{templates, utils, Db};
+use super::callback;
+use crate::{templates, Db, Lang};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
-
-static LANG: &str = "ru";
 
 pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
     let key = db.get_key(hash).await?;
     let components_count = key.components().count();
 
-    let header = db.get_grid_header(hash, LANG).await?;
+    let header = db.get_grid_header(hash, Lang::Ru).await?;
 
     let mut text = header.clone();
     let mut buttons = vec![];
 
     if db.is_data_entry(key.to_str().unwrap()).await? {
-        let data = db.get_key_data(key.to_str().unwrap(), LANG).await?;
+        let data = db.get_key_data(key.to_str().unwrap(), Lang::Ru).await?;
 
         text = {
             use templates::data_entry::Context;
@@ -40,14 +39,17 @@ pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeybo
             .collect::<anyhow::Result<Vec<_>>>()?;
 
         let mut next_buttons = db
-            .get_segment_names(&next_segments, LANG)
+            .get_segment_names(&next_segments, Lang::Ru)
             .await?
             .into_iter()
             .zip(next_keys.into_iter())
             .map(|(name, key)| {
                 vec![InlineKeyboardButton::new(
                     name,
-                    InlineKeyboardButtonKind::CallbackData(cb_data(key.to_str().unwrap())),
+                    InlineKeyboardButtonKind::CallbackData(callback::data(
+                        callback::Command::Goto,
+                        key.to_str().unwrap(),
+                    )),
                 )]
             })
             .collect::<Vec<Vec<InlineKeyboardButton>>>();
@@ -68,15 +70,11 @@ fn navigation(back: &str) -> Vec<Vec<InlineKeyboardButton>> {
     vec![vec![
         InlineKeyboardButton::new(
             "<<".to_string(),
-            InlineKeyboardButtonKind::CallbackData(cb_data("/")),
+            InlineKeyboardButtonKind::CallbackData(callback::data(callback::Command::Goto, "/")),
         ),
         InlineKeyboardButton::new(
             "<".to_string(),
-            InlineKeyboardButtonKind::CallbackData(cb_data(back)),
+            InlineKeyboardButtonKind::CallbackData(callback::data(callback::Command::Goto, back)),
         ),
     ]]
-}
-
-fn cb_data(goto: &str) -> String {
-    format!("/goto#{}", utils::hash(goto))
 }

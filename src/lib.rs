@@ -1,5 +1,8 @@
 mod templates;
 
+mod lang;
+pub use lang::Lang;
+
 mod db;
 pub use db::Db;
 
