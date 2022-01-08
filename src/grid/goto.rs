@@ -20,6 +20,7 @@ pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeybo
             .get_key_created(key.to_str().unwrap())
             .await
             .map(utils::unixtime_to_datetime)?;
+        let views = db.inc_views(key.to_str().unwrap()).await?;
 
         text = {
             use templates::data_entry::Context;
@@ -28,6 +29,7 @@ pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeybo
                 header: header.clone(),
                 data,
                 created,
+                views
             };
             templates::data_entry::render(context, Lang::Ru)?
         };

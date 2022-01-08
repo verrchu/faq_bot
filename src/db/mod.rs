@@ -95,4 +95,11 @@ impl Db {
             .await
             .map_err(anyhow::Error::from)
     }
+
+    pub async fn inc_views(&mut self, key: &str) -> anyhow::Result<u64> {
+        self.conn
+            .incr(format!("{}:views", key), 1)
+            .await
+            .map_err(anyhow::Error::from)
+    }
 }

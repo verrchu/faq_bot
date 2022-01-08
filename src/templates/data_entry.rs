@@ -9,6 +9,7 @@ static RU: &str = r#"
 {{ data }}
 
 _Опубликовано: {{ created }}_
+_Просмотрено: {{ views }}_
 "#;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,6 +17,7 @@ pub struct Context {
     pub header: String,
     pub data: String,
     pub created: String,
+    pub views: u64,
 }
 
 pub fn render(context: Context, lang: Lang) -> anyhow::Result<String> {
