@@ -39,7 +39,7 @@ def process_root(dir):
 
     path_hash = hash(ROOT)
     logging.debug(f'inserting {ROOT} as {path_hash}')
-    DRY_RUN or db.setnx(path_hash, ROOT)  # set hash -> path
+    DRY_RUN or db.hset('key_hashes', path_hash, ROOT)  # set hash -> path
     DRY_RUN or db.setnx(f'{ROOT}:created',
                         unixtime())  # set path:created -> unixtime
 
@@ -70,7 +70,7 @@ def process_child(dir, base_dir):
 
     path_hash = hash(root_path)
     logging.debug(f'inserting {root_path} as {path_hash}')
-    DRY_RUN or db.setnx(path_hash, root_path)  # set hash -> path
+    DRY_RUN or db.hset('key_hashes', path_hash, root_path)  # set hash -> path
     DRY_RUN or db.setnx(f'{root_path}:created',
                         unixtime())  # set path:created -> unixtime
 

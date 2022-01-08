@@ -1,4 +1,4 @@
-local key = redis.pcall('get', ARGV[1])
+local key = redis.pcall('hget', 'key_hashes', ARGV[1])
 
 if not key then
     return false

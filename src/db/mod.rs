@@ -32,8 +32,10 @@ impl Db {
 
 impl Db {
     pub async fn get_key(&mut self, hash: &str) -> anyhow::Result<PathBuf> {
+        tracing::debug!("getting key (hash: {})", hash);
+
         self.conn
-            .get::<_, String>(hash)
+            .hget::<_, _, String>("key_hashes", hash)
             .await
             .map(PathBuf::from)
             .map_err(anyhow::Error::from)

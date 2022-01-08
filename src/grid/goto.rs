@@ -15,7 +15,11 @@ pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeybo
     let mut buttons = vec![];
 
     if db.is_data_entry(key.to_str().unwrap()).await? {
-        let data = db.get_key_data(key.to_str().unwrap(), Lang::Ru).await?;
+        let data = db
+            .get_key_data(key.to_str().unwrap(), Lang::Ru)
+            .await?
+            .trim()
+            .to_string();
         let created = db
             .get_key_created(key.to_str().unwrap())
             .await
@@ -29,7 +33,7 @@ pub async fn goto(hash: &str, mut db: Db) -> anyhow::Result<(String, InlineKeybo
                 header: header.clone(),
                 data,
                 created,
-                views
+                views,
             };
             templates::data_entry::render(context, Lang::Ru)?
         };
