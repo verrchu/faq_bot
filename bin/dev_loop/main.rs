@@ -24,6 +24,8 @@ static TOKEN: Lazy<String> = Lazy::new(|| env::var("TOKEN").expect("TOKEN not pr
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let _ = dotenv::dotenv();
+
     let (writer, _guard) = tracing_appender::non_blocking(stdout());
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())

@@ -36,7 +36,7 @@ impl Db {
         let raw = invocation
             .arg(key)
             .arg(lang)
-            .invoke_async::<_, HashMap<String, redis::Value>>(&mut self.conn)
+            .invoke_async::<_, HashMap<String, String>>(&mut self.conn)
             .await
             .map_err(anyhow::Error::from)?;
 

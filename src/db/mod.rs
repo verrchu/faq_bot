@@ -1,7 +1,7 @@
 mod scripts;
 use scripts::Scripts;
 
-use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf, sync::Arc};
+use std::{collections::BTreeMap, net::Ipv4Addr, path::PathBuf, sync::Arc};
 
 use function_name::named;
 use redis::{aio::ConnectionManager, AsyncCommands, Client};
@@ -56,7 +56,7 @@ impl Db {
         &mut self,
         key: &str,
         lang: &str,
-    ) -> anyhow::Result<HashMap<String, String>> {
+    ) -> anyhow::Result<BTreeMap<String, String>> {
         tracing::debug!(key, lang, "call {}", function_name!());
 
         self.conn

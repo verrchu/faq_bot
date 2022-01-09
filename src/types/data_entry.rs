@@ -4,7 +4,7 @@ use crate::utils::unixtime_to_datetime;
 
 use serde::{Deserialize, Serialize};
 
-type Raw = HashMap<String, redis::Value>;
+type Raw = HashMap<String, String>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataEntry {
@@ -22,47 +22,24 @@ impl TryFrom<Raw> for DataEntry {
                 anyhow::anyhow!("raw data entry has no 'created' field: {:?}", raw)
             })?;
 
-            if let redis::Value::Int(created) = created {
-                u32::try_from(*created)
-                    .map(unixtime_to_datetime)
-                    .map_err(anyhow::Error::from)?
-            } else {
-                return Err(anyhow::anyhow!(
-                    "raw data entry has invalid 'created' field: {:?}",
-                    raw
-                ));
-            }
+            created
+                .parse()
+                .map(unixtime_to_datetime)
+                .map_err(anyhow::Error::from)?
         };
 
         let views = {
-            let created = raw
+            let views = raw
                 .get("views")
                 .ok_or_else(|| anyhow::anyhow!("raw data entry has no 'views' field: {:?}", raw))?;
 
-            if let redis::Value::Int(views) = created {
-                u32::try_from(*views).map_err(anyhow::Error::from)?
-            } else {
-                return Err(anyhow::anyhow!(
-                    "raw data entry has invalid 'views' field: {:?}",
-                    raw
-                ));
-            }
+            views.parse().map_err(anyhow::Error::from)?
         };
 
-        let text = {
-            let created = raw
-                .get("text")
-                .ok_or_else(|| anyhow::anyhow!("raw data entry has no 'text' field: {:?}", raw))?;
-
-            if let redis::Value::Data(text) = created {
-                String::from_utf8(text.to_owned()).map_err(anyhow::Error::from)?
-            } else {
-                return Err(anyhow::anyhow!(
-                    "raw data entry has invalid 'text' field: {:?}",
-                    raw
-                ));
-            }
-        };
+        let text = raw
+            .get("text")
+            .ok_or_else(|| anyhow::anyhow!("raw data entry has no 'text' field: {:?}", raw))?
+            .to_owned();
 
         Ok(Self {
             created,

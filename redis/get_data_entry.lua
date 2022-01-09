@@ -12,6 +12,6 @@ local views = redis.pcall('get', call_key)
 
 return {
     'text', string.gsub(data, "%s+", ""),
-    'created', tonumber(created),
-    'views', tonumber(views)
+    'created', created,
+    'views', views
 }
