@@ -8,13 +8,15 @@ use redis::Script;
 pub(super) struct Scripts {
     get_grid_header: Script,
     get_data_entry: Script,
+    toggle_like: Script,
 }
 
 impl Scripts {
     pub(super) fn load(path: PathBuf) -> anyhow::Result<Self> {
         Ok(Self {
             get_grid_header: load_script(path.clone(), "get_grid_header")?,
-            get_data_entry: load_script(path, "get_data_entry")?,
+            get_data_entry: load_script(path.clone(), "get_data_entry")?,
+            toggle_like: load_script(path, "toggle_like")?,
         })
     }
 }
@@ -52,6 +54,20 @@ impl Db {
         invocation
             .arg(key)
             .arg(lang)
+            .invoke_async(&mut self.conn)
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
+    #[named]
+    pub async fn toggle_like(&mut self, key: &str, user: u64) -> anyhow::Result<bool> {
+        tracing::debug!(key, user, "call {}", function_name!());
+
+        let mut invocation = self.scripts.toggle_like.prepare_invoke();
+
+        invocation
+            .arg(key)
+            .arg(user)
             .invoke_async(&mut self.conn)
             .await
             .map_err(anyhow::Error::from)

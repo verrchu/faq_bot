@@ -134,8 +134,6 @@ def load_data(data_dir, base_dir):
     data_entries = set(os.listdir(data_dir))
 
     DRY_RUN or db.setnx(f'{root_path}:created', unixtime())
-    DRY_RUN or db.setnx(f'{root_path}:likes', 0)
-    DRY_RUN or db.setnx(f'{root_path}:views', 0)
 
     for entry in data_entries:
         entry = os.path.join(data_dir, entry)
