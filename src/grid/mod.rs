@@ -1,5 +1,4 @@
 mod callback;
-mod utils;
 
 mod goto;
 pub use goto::goto;

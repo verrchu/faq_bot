@@ -30,7 +30,7 @@ args = parser.parse_args()
 DRY_RUN = args.dry_run
 LANGS = set(args.langs)
 
-db = Redis(host=args.db_host, port=args.db_port)
+db = Redis(host=args.db_host, port=args.db_port, decode_responses=True)
 
 
 def process_root(dir):
@@ -54,13 +54,27 @@ def process_root(dir):
 
     for entry in dir_entries:
         logging.debug(f'adding {entry} to {ROOT}:next')
-        DRY_RUN or db.sadd(f'{ROOT}:next', os.path.join(ROOT, entry))
+
+        segment = entry
+        key = os.path.join(ROOT, entry)
+
+        DRY_RUN or db.sadd(f'{ROOT}:next', key)
 
         entry = os.path.join(dir, entry)
         if not os.path.isdir(entry):
             abort(f'{entry} is not a directory')
 
         process_child(entry, base_dir=dir)
+
+        if not DRY_RUN:
+            for lang in LANGS:
+                segment_name = db.get(f'{segment}:name:{lang}')
+                key_icon = db.get(f'{key}:icon')
+
+                l10n = f'{key_icon} {segment_name}' if key_icon else segment_name
+
+                db.hset(f'/:next:{lang}', key, l10n)
+
 
 
 def process_child(dir, base_dir):
@@ -96,13 +110,26 @@ def process_child(dir, base_dir):
 
     for entry in dir_entries:
         logging.debug(f'adding {entry} to {root_path}:next')
-        DRY_RUN or db.sadd(f'{root_path}:next', os.path.join(root_path, entry))
+
+        segment = entry
+        key = os.path.join(root_path, entry)
+
+        DRY_RUN or db.sadd(f'{root_path}:next', key)
 
         entry = os.path.join(dir, entry)
         if not os.path.isdir(entry):
             abort(f'{entry} is not a directory')
 
         process_child(entry, base_dir)
+
+        if not DRY_RUN:
+            for lang in LANGS:
+                segment_name = db.get(f'{segment}:name:{lang}')
+                key_icon = db.get(f'{key}:icon')
+
+                l10n = f'{key_icon} {segment_name}' if key_icon else segment_name
+
+                db.hset(f'{root_path}:next:{lang}', key, l10n)
 
 
 def load_data(data_dir, base_dir):

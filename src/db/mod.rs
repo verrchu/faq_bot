@@ -3,7 +3,7 @@ use scripts::Scripts;
 
 use crate::Lang;
 
-use std::{net::Ipv4Addr, path::PathBuf, sync::Arc};
+use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf, sync::Arc};
 
 use function_name::named;
 use redis::{aio::ConnectionManager, AsyncCommands, Client};
@@ -64,7 +64,9 @@ impl Db {
         S: AsRef<str>,
         I: IntoIterator<Item = S>,
     {
-        tracing::debug!(lang = lang.as_str(), "call {}", function_name!());
+        let lang = lang.as_str();
+
+        tracing::debug!(lang, "call {}", function_name!());
 
         let segments = segments
             .into_iter()
@@ -110,7 +112,9 @@ impl Db {
 
     #[named]
     pub async fn get_key_data(&mut self, key: &str, lang: &Lang) -> anyhow::Result<String> {
-        tracing::debug!(key, lang = lang.as_str(), "call {}", function_name!());
+        let lang = lang.as_str();
+
+        tracing::debug!(key, lang, "call {}", function_name!());
 
         self.conn
             .get(format!("{}:data:{}", key, lang))
@@ -124,6 +128,22 @@ impl Db {
 
         self.conn
             .get(format!("{}:created", key))
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
+    #[named]
+    pub async fn get_next_buttons(
+        &mut self,
+        key: &str,
+        lang: &Lang,
+    ) -> anyhow::Result<HashMap<String, String>> {
+        let lang = lang.as_str();
+
+        tracing::debug!(key, lang, "call {}", function_name!());
+
+        self.conn
+            .hgetall(format!("{}:next:{}", key, lang))
             .await
             .map_err(anyhow::Error::from)
     }

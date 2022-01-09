@@ -90,7 +90,6 @@ dependencies = [
  "chrono",
  "clap",
  "function_name",
- "futures",
  "humantime-serde",
  "md5",
  "once_cell",

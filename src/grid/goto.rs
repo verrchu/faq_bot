@@ -1,9 +1,8 @@
 use std::path::PathBuf;
 
-use super::{callback, utils::format_segment};
+use super::callback;
 use crate::{templates, utils, Db, Lang};
 
-use futures::try_join;
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
 pub async fn goto(key: PathBuf, mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
@@ -40,48 +39,22 @@ pub async fn goto(key: PathBuf, mut db: Db) -> anyhow::Result<(String, InlineKey
             templates::data_entry::render(context, Lang::Ru)?
         };
     } else {
-        let next_keys = db.get_next_keys(key_str).await?;
-        let next_segments = next_keys
-            .iter()
-            .map(|next_key| {
-                next_key
-                    .strip_prefix(&key)
-                    .map_err(anyhow::Error::from)
-                    .map(|next_segment| next_segment.to_str().unwrap().to_string())
-            })
-            .collect::<anyhow::Result<Vec<_>>>()?;
-
-        let next_keys = next_keys
+        let next_buttons = db
+            .get_next_buttons(key_str, &Lang::Ru)
+            .await?
             .into_iter()
-            .map(|next_key| next_key.to_str().unwrap().to_string())
-            .collect::<Vec<_>>();
-
-        let (segment_names, key_icons) = {
-            let mut db1 = db.clone();
-            let mut db2 = db.clone();
-
-            try_join!(
-                db1.get_segment_names(&next_segments, &Lang::Ru),
-                db2.get_key_icons(next_keys.clone()),
-            )
-        }?;
-
-        let mut next_buttons = segment_names
-            .iter()
-            .zip(key_icons.iter())
-            .zip(next_keys.iter())
-            .map(|((name, icon), key)| {
+            .map(|(key, name)| {
                 vec![InlineKeyboardButton::new(
-                    format_segment(name, icon.as_ref()),
+                    &name,
                     InlineKeyboardButtonKind::CallbackData(callback::data(
                         callback::Command::Goto,
-                        key,
+                        &key,
                     )),
                 )]
             })
             .collect::<Vec<Vec<InlineKeyboardButton>>>();
 
-        buttons.append(&mut next_buttons);
+        buttons = next_buttons;
     }
 
     if components_count > 1 {
