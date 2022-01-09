@@ -1,4 +1,4 @@
-use crate::Lang;
+use crate::{DataEntry, Lang};
 
 use serde::{Deserialize, Serialize};
 use tera::Tera;
@@ -6,18 +6,16 @@ use tera::Tera;
 static RU: &str = r#"
 {{ header }}
 
-{{ data }}
+{{ data_entry.text }}
 
-_Опубликовано: {{ created }}_
-_Просмотрено: {{ views }}_
+_Опубликовано: {{ data_entry.created }}_
+_Просмотрено: {{ data_entry.views }}_
 "#;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Context {
     pub header: String,
-    pub data: String,
-    pub created: String,
-    pub views: u64,
+    pub data_entry: DataEntry,
 }
 
 pub fn render(context: Context, lang: Lang) -> anyhow::Result<String> {

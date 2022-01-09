@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
-chrono = { vercion = "0.4", default-features = false, features = ["std"] }
+chrono = { version = "0.4", default-features = false, features = ["std"] }
 clap = { version = "3", default-features = false, features = ["std", "derive"] }
 function_name = "0.2"
 humantime-serde = "1"

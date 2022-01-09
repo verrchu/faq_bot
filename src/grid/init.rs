@@ -6,10 +6,10 @@ use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, Inlin
 pub async fn init(mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
     let key = "/";
 
-    let header = db.get_grid_header(key, &Lang::Ru).await?;
+    let header = db.get_grid_header(key, Lang::Ru.as_str()).await?;
 
     let next_buttons = db
-        .get_next_buttons(key, &Lang::Ru)
+        .get_next_buttons(key, Lang::Ru.as_str())
         .await?
         .into_iter()
         .map(|(key, name)| {

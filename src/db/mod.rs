@@ -1,8 +1,6 @@
 mod scripts;
 use scripts::Scripts;
 
-use crate::Lang;
-
 use std::{collections::HashMap, net::Ipv4Addr, path::PathBuf, sync::Arc};
 
 use function_name::named;
@@ -44,63 +42,6 @@ impl Db {
     }
 
     #[named]
-    pub async fn get_next_keys(&mut self, key: &str) -> anyhow::Result<Vec<PathBuf>> {
-        tracing::debug!(key, "call {}", function_name!());
-
-        self.conn
-            .smembers::<_, Vec<String>>(format!("{}:next", key))
-            .await
-            .map(|keys| keys.into_iter().map(PathBuf::from).collect())
-            .map_err(anyhow::Error::from)
-    }
-
-    #[named]
-    pub async fn get_segment_names<I, S>(
-        &mut self,
-        segments: I,
-        lang: &Lang,
-    ) -> anyhow::Result<Vec<String>>
-    where
-        S: AsRef<str>,
-        I: IntoIterator<Item = S>,
-    {
-        let lang = lang.as_str();
-
-        tracing::debug!(lang, "call {}", function_name!());
-
-        let segments = segments
-            .into_iter()
-            .map(|segment| format!("{}:name:{}", segment.as_ref(), lang))
-            .collect::<Vec<_>>();
-
-        redis::cmd("MGET")
-            .arg(segments)
-            .query_async(&mut self.conn)
-            .await
-            .map_err(anyhow::Error::from)
-    }
-
-    #[named]
-    pub async fn get_key_icons<I, S>(&mut self, keys: I) -> anyhow::Result<Vec<Option<String>>>
-    where
-        S: AsRef<str>,
-        I: IntoIterator<Item = S>,
-    {
-        tracing::debug!("call {}", function_name!());
-
-        let keys = keys
-            .into_iter()
-            .map(|key| format!("{}:icon", key.as_ref()))
-            .collect::<Vec<_>>();
-
-        redis::cmd("MGET")
-            .arg(keys)
-            .query_async(&mut self.conn)
-            .await
-            .map_err(anyhow::Error::from)
-    }
-
-    #[named]
     pub async fn is_data_entry(&mut self, key: &str) -> anyhow::Result<bool> {
         tracing::debug!(key, "call {}", function_name!());
 
@@ -111,35 +52,11 @@ impl Db {
     }
 
     #[named]
-    pub async fn get_key_data(&mut self, key: &str, lang: &Lang) -> anyhow::Result<String> {
-        let lang = lang.as_str();
-
-        tracing::debug!(key, lang, "call {}", function_name!());
-
-        self.conn
-            .get(format!("{}:data:{}", key, lang))
-            .await
-            .map_err(anyhow::Error::from)
-    }
-
-    #[named]
-    pub async fn get_key_created(&mut self, key: &str) -> anyhow::Result<u64> {
-        tracing::debug!(key, "call {}", function_name!());
-
-        self.conn
-            .get(format!("{}:created", key))
-            .await
-            .map_err(anyhow::Error::from)
-    }
-
-    #[named]
     pub async fn get_next_buttons(
         &mut self,
         key: &str,
-        lang: &Lang,
+        lang: &str,
     ) -> anyhow::Result<HashMap<String, String>> {
-        let lang = lang.as_str();
-
         tracing::debug!(key, lang, "call {}", function_name!());
 
         self.conn
@@ -150,7 +67,7 @@ impl Db {
 
     #[named]
     pub async fn inc_views(&mut self, key: &str) -> anyhow::Result<u64> {
-        tracing::info!(key, "call {}", function_name!());
+        tracing::debug!(key, "call {}", function_name!());
 
         self.conn
             .incr(format!("{}:views", key), 1)

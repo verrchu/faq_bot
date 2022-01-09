@@ -1,7 +1,6 @@
 mod templates;
-
-mod lang;
-pub use lang::Lang;
+mod types;
+pub use types::{DataEntry, Lang};
 
 mod db;
 pub use db::Db;

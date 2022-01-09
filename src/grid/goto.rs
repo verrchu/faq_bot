@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use super::callback;
-use crate::{templates, utils, Db, Lang};
+use crate::{templates, Db, Lang};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
@@ -10,37 +10,28 @@ pub async fn goto(key: PathBuf, mut db: Db) -> anyhow::Result<(String, InlineKey
 
     let components_count = key.components().count();
 
-    let header = db.get_grid_header(key_str, &Lang::Ru).await?;
+    let header = db.get_grid_header(key_str, Lang::Ru.as_str()).await?;
 
     let mut text = header.clone();
     let mut buttons = vec![];
 
     if db.is_data_entry(key_str).await? {
-        let data = db
-            .get_key_data(key_str, &Lang::Ru)
-            .await?
-            .trim()
-            .to_string();
-        let created = db
-            .get_key_created(key_str)
-            .await
-            .map(utils::unixtime_to_datetime)?;
-        let views = db.inc_views(key_str).await?;
+        db.inc_views(key_str).await?;
+
+        let data_entry = db.get_data_entry(key_str, Lang::Ru.as_str()).await?;
 
         text = {
             use templates::data_entry::Context;
 
             let context = Context {
                 header: header.clone(),
-                data,
-                created,
-                views,
+                data_entry,
             };
             templates::data_entry::render(context, Lang::Ru)?
         };
     } else {
         let next_buttons = db
-            .get_next_buttons(key_str, &Lang::Ru)
+            .get_next_buttons(key_str, Lang::Ru.as_str())
             .await?
             .into_iter()
             .map(|(key, name)| {
