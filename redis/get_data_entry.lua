@@ -10,8 +10,12 @@ local created = redis.pcall('get', call_key)
 local call_key = string.gsub('$key:views', '%$(%w+)', {key=key})
 local views = redis.pcall('get', call_key)
 
+local call_key = string.gsub('$key:likes', '%$(%w+)', {key=key})
+local likes = redis.pcall('get', call_key)
+
 return {
     'text', string.gsub(data, "%s+", ""),
     'created', created,
-    'views', views
+    'views', views,
+    'likes', likes
 }

@@ -11,6 +11,7 @@ pub struct DataEntry {
     pub text: String,
     pub created: String,
     pub views: u32,
+    pub likes: u32,
 }
 
 impl TryFrom<Raw> for DataEntry {
@@ -36,6 +37,14 @@ impl TryFrom<Raw> for DataEntry {
             views.parse().map_err(anyhow::Error::from)?
         };
 
+        let likes = {
+            let likes = raw
+                .get("likes")
+                .ok_or_else(|| anyhow::anyhow!("raw data entry has no 'likes' field: {:?}", raw))?;
+
+            likes.parse().map_err(anyhow::Error::from)?
+        };
+
         let text = raw
             .get("text")
             .ok_or_else(|| anyhow::anyhow!("raw data entry has no 'text' field: {:?}", raw))?
@@ -44,6 +53,7 @@ impl TryFrom<Raw> for DataEntry {
         Ok(Self {
             created,
             views,
+            likes,
             text,
         })
     }

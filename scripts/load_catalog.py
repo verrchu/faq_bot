@@ -40,8 +40,6 @@ def process_root(dir):
     path_hash = hash(ROOT)
     logging.debug(f'inserting {ROOT} as {path_hash}')
     DRY_RUN or db.hset('key_hashes', path_hash, ROOT)  # set hash -> path
-    DRY_RUN or db.setnx(f'{ROOT}:created',
-                        unixtime())  # set path:created -> unixtime
 
     dir_entries = os.listdir(dir)
     dir_entries.remove(NAME_FILE)
@@ -86,8 +84,6 @@ def process_child(dir, base_dir):
     path_hash = hash(root_path)
     logging.debug(f'inserting {root_path} as {path_hash}')
     DRY_RUN or db.hset('key_hashes', path_hash, root_path)  # set hash -> path
-    DRY_RUN or db.setnx(f'{root_path}:created',
-                        unixtime())  # set path:created -> unixtime
 
     dir_entries = os.listdir(dir)
     dir_entries.remove(NAME_FILE)
@@ -136,6 +132,10 @@ def load_data(data_dir, base_dir):
     root_path = get_root_path(data_dir.removesuffix(DATA_DIR), base_dir)
     logging.info(f'loading data for {root_path}')
     data_entries = set(os.listdir(data_dir))
+
+    DRY_RUN or db.setnx(f'{root_path}:created', unixtime())
+    DRY_RUN or db.setnx(f'{root_path}:likes', 0)
+    DRY_RUN or db.setnx(f'{root_path}:views', 0)
 
     for entry in data_entries:
         entry = os.path.join(data_dir, entry)

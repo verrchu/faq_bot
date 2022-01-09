@@ -20,6 +20,7 @@ tracing = "0.1"
 tracing-appender = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15"
+typed-builder = "0.9"
 
 [dependencies.redis]
 version = "0.21"

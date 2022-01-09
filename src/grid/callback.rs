@@ -9,12 +9,14 @@ pub fn data(cmd: Command, key: &str) -> String {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
     Goto,
+    Like,
 }
 
 impl fmt::Display for Command {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Goto => write!(f, "goto"),
+            Self::Like => write!(f, "like"),
         }
     }
 }

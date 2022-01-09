@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::callback;
+use super::{callback, Navigation};
 use crate::{templates, Db, Lang};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
@@ -20,6 +20,8 @@ pub async fn goto(key: PathBuf, mut db: Db) -> anyhow::Result<(String, InlineKey
 
         let data_entry = db.get_data_entry(key_str, Lang::Ru.as_str()).await?;
 
+        let likes = data_entry.likes;
+
         text = {
             use templates::data_entry::Context;
 
@@ -29,6 +31,16 @@ pub async fn goto(key: PathBuf, mut db: Db) -> anyhow::Result<(String, InlineKey
             };
             templates::data_entry::render(context, Lang::Ru)?
         };
+
+        let previous_key = PathBuf::from_iter(key.components().take(components_count - 1));
+
+        let navigation = Navigation::builder()
+            .cur(key_str)
+            .prev(previous_key.to_str().unwrap())
+            .likes(likes)
+            .build();
+
+        buttons.append(&mut navigation.render());
     } else {
         let next_buttons = db
             .get_next_buttons(key_str, Lang::Ru.as_str())
@@ -46,27 +58,20 @@ pub async fn goto(key: PathBuf, mut db: Db) -> anyhow::Result<(String, InlineKey
             .collect::<Vec<Vec<InlineKeyboardButton>>>();
 
         buttons = next_buttons;
-    }
 
-    if components_count > 1 {
-        let previous_key = PathBuf::from_iter(key.components().take(components_count - 1));
-        buttons.append(&mut navigation(previous_key.to_str().unwrap()));
+        if components_count > 1 {
+            let previous_key = PathBuf::from_iter(key.components().take(components_count - 1));
+
+            let navigation = Navigation::builder()
+                .cur(key_str)
+                .prev(previous_key.to_str().unwrap())
+                .build();
+
+            buttons.append(&mut navigation.render());
+        }
     }
 
     let buttons = InlineKeyboardMarkup::new(buttons);
 
     Ok((text, buttons))
-}
-
-fn navigation(back: &str) -> Vec<Vec<InlineKeyboardButton>> {
-    vec![vec![
-        InlineKeyboardButton::new(
-            "<<".to_string(),
-            InlineKeyboardButtonKind::CallbackData(callback::data(callback::Command::Goto, "/")),
-        ),
-        InlineKeyboardButton::new(
-            "<".to_string(),
-            InlineKeyboardButtonKind::CallbackData(callback::data(callback::Command::Goto, back)),
-        ),
-    ]]
 }
