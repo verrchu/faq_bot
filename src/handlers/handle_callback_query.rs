@@ -36,6 +36,7 @@ pub async fn handle_callback_query<R: Requester<Err = RequestError>>(
                     .await?;
 
                 bot.edit_message_text(cb.from.id, msg.id, header)
+                    .disable_web_page_preview(true)
                     .reply_markup(keyboard)
                     .send()
                     .await
@@ -69,6 +70,7 @@ pub async fn handle_callback_query<R: Requester<Err = RequestError>>(
                     .await?;
 
                 bot.edit_message_text(cb.from.id, msg.id, header)
+                    .disable_web_page_preview(true)
                     .reply_markup(keyboard)
                     .send()
                     .await

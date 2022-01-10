@@ -4,12 +4,12 @@ use serde::{Deserialize, Serialize};
 use tera::Tera;
 
 static RU: &str = r#"
-{{ header }}
+*{{ header }}*
 
 {{ data_entry.text }}
 
-_Опубликовано: {{ data_entry.created }}_
-_Просмотрено: {{ data_entry.views }}_
+*_Опубликовано: {{ data_entry.created }}_*
+*_Просмотрено: {{ data_entry.views }}_*
 "#;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

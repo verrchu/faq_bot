@@ -14,7 +14,7 @@ local call_key = string.gsub('$key:likes', '%$(%w+)', {key=key})
 local likes = redis.pcall('scard', call_key)
 
 return {
-    'text', string.gsub(data, "%s+", ""),
+    'text', string.gsub(data, '^%s*(.-)%s*$', '%1'),
     'created', created,
     'views', views,
     'likes', tostring(likes)

@@ -69,6 +69,8 @@ pub async fn goto(key: PathBuf, mut db: Db) -> anyhow::Result<(String, InlineKey
 
             buttons.append(&mut navigation.render());
         }
+
+        text = format!("*{}*", text);
     }
 
     let buttons = InlineKeyboardMarkup::new(buttons);

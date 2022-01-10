@@ -26,6 +26,7 @@ pub async fn handle_message<R: Requester<Err = RequestError>>(
                         .await?;
 
                     bot.send_message(user.id, header)
+                        .disable_web_page_preview(true)
                         .reply_markup(keyboard)
                         .send()
                         .await
@@ -35,7 +36,14 @@ pub async fn handle_message<R: Requester<Err = RequestError>>(
 
                 block.instrument(span).await?;
             }
-            _ => tracing::warn!("unexpected message: {}", text),
+            _ => {
+                bot.delete_message(user.id, message.id)
+                    .send()
+                    .await
+                    .map_err(anyhow::Error::from)?;
+
+                tracing::warn!("unexpected message: {}", text);
+            }
         }
     } else {
         tracing::warn!("unexpected message kind: {:?}", message);

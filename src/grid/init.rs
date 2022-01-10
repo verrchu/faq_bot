@@ -25,5 +25,5 @@ pub async fn init(mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> 
 
     let next_buttons = InlineKeyboardMarkup::new(next_buttons);
 
-    Ok((header, next_buttons))
+    Ok((format!("*{}*", header), next_buttons))
 }
