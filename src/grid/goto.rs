@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use super::{callback, feedback::add_feedback_button, Navigation};
-use crate::{templates, Db, Lang};
+use crate::{templates, Context};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
@@ -9,13 +9,16 @@ pub async fn goto(
     key: PathBuf,
     // FIXME: this hack is supposed to prevent vies increment on renders after like
     visit: bool,
-    mut db: Db,
+    context: Context,
 ) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
+    let mut db = context.db;
+    let lang = context.lang;
+
     let key_str = key.to_str().unwrap();
 
     let components_count = key.components().count();
 
-    let header = db.get_grid_header(key_str, Lang::Ru.as_str()).await?;
+    let header = db.get_grid_header(key_str, lang.as_str()).await?;
 
     let mut text = header.clone();
     let mut buttons = vec![];
@@ -25,7 +28,7 @@ pub async fn goto(
             db.inc_views(key_str).await?;
         }
 
-        let data_entry = db.get_data_entry(key_str, Lang::Ru.as_str()).await?;
+        let data_entry = db.get_data_entry(key_str, lang.as_str()).await?;
 
         let likes = data_entry.likes;
 
@@ -36,7 +39,7 @@ pub async fn goto(
                 header: header.clone(),
                 data_entry,
             };
-            templates::data_entry::render(context, Lang::Ru)?
+            templates::data_entry::render(context, lang)?
         };
 
         let previous_key = PathBuf::from_iter(key.components().take(components_count - 1));
@@ -50,7 +53,7 @@ pub async fn goto(
         buttons.append(&mut navigation.render());
     } else {
         let next_buttons = db
-            .get_next_buttons(key_str, Lang::Ru.as_str())
+            .get_next_buttons(key_str, lang.as_str())
             .await?
             .into_iter()
             .map(|(key, name)| {
@@ -81,7 +84,7 @@ pub async fn goto(
     }
 
     let mut buttons = InlineKeyboardMarkup::new(buttons);
-    add_feedback_button(&mut buttons);
+    add_feedback_button(&mut buttons, lang);
 
     Ok((text, buttons))
 }

@@ -1,9 +1,10 @@
 mod grid;
+mod l10n;
 mod templates;
 mod utils;
 
 mod types;
-pub use types::{DataEntry, Lang};
+pub use types::DataEntry;
 
 mod db;
 pub use db::Db;
@@ -20,13 +21,17 @@ use teloxide_core::{
     types::{Update, UpdateKind},
     Bot,
 };
+use typed_builder::TypedBuilder;
 
 type Tg = DefaultParseMode<Bot>;
 
-#[derive(Clone)]
+#[derive(Clone, TypedBuilder)]
 pub struct Context {
     pub tg: Tg,
     pub db: Db,
+
+    #[builder(default = l10n::Lang::Ru)]
+    pub lang: l10n::Lang,
 
     pub config: Arc<Config>,
 }

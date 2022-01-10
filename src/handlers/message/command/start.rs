@@ -8,10 +8,9 @@ use teloxide_core::{
 use tracing::Instrument;
 
 pub async fn handle(user: &User, context: Context) -> anyhow::Result<()> {
-    let db = context.db;
-    let tg = context.tg;
+    let tg = context.tg.clone();
 
-    let (header, keyboard) = grid::init(db)
+    let (header, keyboard) = grid::init(context)
         .instrument(tracing::info_span!("grid_init"))
         .await?;
 

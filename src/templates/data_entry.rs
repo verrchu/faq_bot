@@ -1,4 +1,4 @@
-use crate::{DataEntry, Lang};
+use crate::{l10n::Lang, DataEntry};
 
 use serde::{Deserialize, Serialize};
 use tera::Tera;

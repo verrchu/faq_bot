@@ -1,4 +1,4 @@
-use crate::Context;
+use crate::{l10n, Context};
 
 use teloxide_core::requests::{Request, Requester};
 
@@ -28,11 +28,12 @@ pub async fn cleanup(
 
 pub async fn ack(user_id: i64, context: Context) -> anyhow::Result<()> {
     let config = context.config;
+    let lang = context.lang;
 
     let tg = context.tg;
 
     let message = tg
-        .send_message(user_id, "FEEDBACK ACCEPTED")
+        .send_message(user_id, l10n::messages::feedback_ack(lang))
         .send()
         .await
         .map_err(anyhow::Error::from)?;

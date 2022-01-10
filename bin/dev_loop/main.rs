@@ -44,11 +44,11 @@ async fn run(config: Config) -> anyhow::Result<()> {
     let tg = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
     let db = bot::Db::connect(config.db.host, config.db.port, config.db.scripts_path).await?;
 
-    let context = bot::Context {
-        tg,
-        db,
-        config: Arc::new(config.bot),
-    };
+    let context = bot::Context::builder()
+        .tg(tg)
+        .db(db)
+        .config(Arc::new(config.bot))
+        .build();
 
     let mut offset = 0;
     let mut get_updates = context

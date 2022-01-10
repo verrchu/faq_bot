@@ -8,8 +8,8 @@ use teloxide_core::{
 use tracing::Instrument;
 
 pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow::Result<()> {
-    let mut db = context.db;
-    let tg = context.tg;
+    let mut db = context.db.clone();
+    let tg = context.tg.clone();
 
     let message_id = cb
         .message
@@ -22,7 +22,7 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow:
 
     let liked = db.toggle_like(key_str, cb.from.id).await?;
 
-    let (header, keyboard) = grid::goto(key.clone(), false, db)
+    let (header, keyboard) = grid::goto(key.clone(), false, context)
         .instrument(tracing::trace_span!(
             "grid_goto",
             key = key.to_str().unwrap()

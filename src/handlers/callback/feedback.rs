@@ -1,4 +1,4 @@
-use crate::Context;
+use crate::{l10n, Context};
 
 use teloxide_core::{
     requests::{Request, Requester},
@@ -8,13 +8,14 @@ use teloxide_core::{
 pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> {
     let mut db = context.db;
     let tg = context.tg;
+    let lang = context.lang;
 
     let is_active = db.is_feedback_process_active(cb.from.id).await?;
 
     // TODO: signal in query response that feedback is in progress
     if !is_active {
         let message = tg
-            .send_message(cb.from.id, "PLEASE SEND FEEDBACK")
+            .send_message(cb.from.id, l10n::messages::feedback_prelude(lang))
             .send()
             .await
             .map_err(anyhow::Error::from)?;
