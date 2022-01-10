@@ -1,4 +1,4 @@
-use crate::{grid, Db, Tg};
+use crate::{grid, Context};
 
 use teloxide_core::{
     payloads::setters::*,
@@ -7,7 +7,10 @@ use teloxide_core::{
 };
 use tracing::Instrument;
 
-pub async fn handle(tg: Tg, cb: &CallbackQuery, hash: &str, mut db: Db) -> anyhow::Result<()> {
+pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow::Result<()> {
+    let mut db = context.db;
+    let tg = context.tg;
+
     let message_id = cb
         .message
         .as_ref()

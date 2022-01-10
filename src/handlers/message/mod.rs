@@ -1,12 +1,12 @@
 mod command;
 mod text;
 
-use crate::{Db, Tg};
+use crate::Context;
 
 use teloxide_core::types::Message;
 use tracing::Instrument;
 
-pub async fn handle(tg: Tg, msg: &Message, db: Db) -> anyhow::Result<()> {
+pub async fn handle(msg: &Message, context: Context) -> anyhow::Result<()> {
     if let (Some(user), Some(text)) = (msg.from(), msg.text()) {
         let username = user.username.as_ref().map(AsRef::<str>::as_ref);
 
@@ -15,14 +15,14 @@ pub async fn handle(tg: Tg, msg: &Message, db: Db) -> anyhow::Result<()> {
                 let span =
                     tracing::info_span!("handle_command", username, command = "/start", msg.id);
 
-                command::start::handle(tg, user, db)
+                command::start::handle(user, context)
                     .instrument(span)
                     .await?;
             }
             text => {
                 let span = tracing::info_span!("handle_message", username, msg.id);
 
-                text::handle(tg, msg, user, text, db)
+                text::handle(msg, user, text, context)
                     .instrument(span)
                     .await?;
             }

@@ -1,11 +1,14 @@
-use crate::{Db, Tg};
+use crate::Context;
 
 use teloxide_core::{
     requests::{Request, Requester},
     types::CallbackQuery,
 };
 
-pub async fn handle(tg: Tg, cb: &CallbackQuery, mut db: Db) -> anyhow::Result<()> {
+pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> {
+    let mut db = context.db;
+    let tg = context.tg;
+
     let is_active = db.is_feedback_process_active(cb.from.id).await?;
 
     // TODO: signal in query response that feedback is in progress

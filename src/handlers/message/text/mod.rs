@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::{Db, Tg};
+use crate::Context;
 
 use teloxide_core::{
     requests::{Request, Requester},
@@ -8,12 +8,14 @@ use teloxide_core::{
 };
 
 pub async fn handle(
-    tg: Tg,
     msg: &Message,
     user: &User,
     text: &str,
-    mut db: Db,
+    context: Context,
 ) -> anyhow::Result<()> {
+    let tg = context.tg;
+    let mut db = context.db;
+
     if let Some(feedback_message_id) = db.get_feedback_message_id(user.id).await? {
         {
             let user = user.to_owned();

@@ -1,4 +1,4 @@
-use crate::{grid, Db, Tg};
+use crate::{grid, Context};
 
 use teloxide_core::{
     payloads::setters::*,
@@ -7,7 +7,10 @@ use teloxide_core::{
 };
 use tracing::Instrument;
 
-pub async fn handle(tg: Tg, user: &User, db: Db) -> anyhow::Result<()> {
+pub async fn handle(user: &User, context: Context) -> anyhow::Result<()> {
+    let db = context.db;
+    let tg = context.tg;
+
     let (header, keyboard) = grid::init(db)
         .instrument(tracing::info_span!("grid_init"))
         .await?;

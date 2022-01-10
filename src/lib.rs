@@ -18,10 +18,16 @@ use teloxide_core::{
 
 type Tg = DefaultParseMode<Bot>;
 
-pub async fn process_update(tg: Tg, update: &Update, db: Db) -> anyhow::Result<()> {
+#[derive(Clone)]
+pub struct Context {
+    pub tg: Tg,
+    pub db: Db
+}
+
+pub async fn process_update(update: &Update, context: Context) -> anyhow::Result<()> {
     match &update.kind {
-        UpdateKind::Message(inner) => handlers::message::handle(tg, inner, db).await,
-        UpdateKind::CallbackQuery(inner) => handlers::callback::handle(tg, inner, db).await,
+        UpdateKind::Message(inner) => handlers::message::handle(inner, context).await,
+        UpdateKind::CallbackQuery(inner) => handlers::callback::handle(inner, context).await,
         _ => {
             tracing::warn!("unexpected update kind arrived: {:?}", update);
             Ok(())
