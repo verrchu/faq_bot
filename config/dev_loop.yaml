@@ -8,4 +8,4 @@ interval:
 
 bot:
   feedback:
-    ack_ttl: 1500ms
+    ack_ttl: 3s

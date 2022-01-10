@@ -1,3 +1,5 @@
+mod feedback;
+
 use crate::Context;
 
 use teloxide_core::{
@@ -11,54 +13,20 @@ pub async fn handle(
     text: &str,
     context: Context,
 ) -> anyhow::Result<()> {
-    let tg = context.tg;
-    let mut db = context.db;
-    let config = context.config;
+    let tg = context.tg.clone();
+    let mut db = context.db.clone();
 
     if let Some(feedback_message_id) = db.get_feedback_message_id(user.id).await? {
         {
-            let user = user.to_owned();
-            let msg = msg.to_owned();
-            let tg = tg.clone();
-            let mut db = db.clone();
-
+            let (user_id, msg_id, context) = (user.id, msg.id, context.clone());
             tokio::spawn(async move {
-                tg.delete_message(user.id, feedback_message_id)
-                    .send()
-                    .await
-                    .map_err(anyhow::Error::from)?;
-
-                tg.delete_message(user.id, msg.id)
-                    .send()
-                    .await
-                    .map_err(anyhow::Error::from)?;
-
-                db.end_feedback_process(user.id).await?;
-
-                Ok::<_, anyhow::Error>(())
+                feedback::cleanup(user_id, feedback_message_id, msg_id, context).await
             });
         }
 
         {
-            let user = user.to_owned();
-            let tg = tg.clone();
-
-            tokio::spawn(async move {
-                let message = tg
-                    .send_message(user.id, "FEEDBACK ACCEPTED")
-                    .send()
-                    .await
-                    .map_err(anyhow::Error::from)?;
-
-                tokio::time::sleep(config.feedback.ack_ttl).await;
-
-                tg.delete_message(user.id, message.id)
-                    .send()
-                    .await
-                    .map_err(anyhow::Error::from)?;
-
-                Ok::<_, anyhow::Error>(())
-            });
+            let (user_id, context) = (user.id, context);
+            tokio::spawn(async move { feedback::ack(user_id, context).await });
         }
     } else {
         tg.delete_message(user.id, msg.id)
