@@ -9,7 +9,7 @@ mod grid;
 mod utils;
 
 mod handlers;
-use handlers::{handle_callback_query, handle_message};
+use handlers::handle_message;
 
 use teloxide_core::{
     requests::Requester,
@@ -24,7 +24,7 @@ pub async fn process_update<R: Requester<Err = RequestError>>(
 ) -> anyhow::Result<()> {
     match &update.kind {
         UpdateKind::Message(inner) => handle_message(bot, inner, db).await,
-        UpdateKind::CallbackQuery(inner) => handle_callback_query(bot, inner, db).await,
+        UpdateKind::CallbackQuery(inner) => handlers::callback::handle(bot, inner, db).await,
         _ => {
             tracing::warn!("unexpected update kind arrived: {:?}", update);
             Ok(())

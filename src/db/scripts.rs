@@ -60,7 +60,7 @@ impl Db {
     }
 
     #[named]
-    pub async fn toggle_like(&mut self, key: &str, user: u64) -> anyhow::Result<bool> {
+    pub async fn toggle_like(&mut self, key: &str, user: i64) -> anyhow::Result<bool> {
         tracing::debug!(key, user, "call {}", function_name!());
 
         let mut invocation = self.scripts.toggle_like.prepare_invoke();

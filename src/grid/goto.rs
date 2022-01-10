@@ -5,7 +5,12 @@ use crate::{templates, Db, Lang};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
-pub async fn goto(key: PathBuf, mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
+pub async fn goto(
+    key: PathBuf,
+    // FIXME: this hack is supposed to prevent vies increment on renders after like
+    visit: bool,
+    mut db: Db,
+) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
     let key_str = key.to_str().unwrap();
 
     let components_count = key.components().count();
@@ -16,7 +21,9 @@ pub async fn goto(key: PathBuf, mut db: Db) -> anyhow::Result<(String, InlineKey
     let mut buttons = vec![];
 
     if db.is_data_entry(key_str).await? {
-        db.inc_views(key_str).await?;
+        if visit {
+            db.inc_views(key_str).await?;
+        }
 
         let data_entry = db.get_data_entry(key_str, Lang::Ru.as_str()).await?;
 
