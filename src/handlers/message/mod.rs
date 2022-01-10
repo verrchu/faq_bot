@@ -1,16 +1,22 @@
 mod command;
 mod text;
 
+use std::sync::Arc;
+
 use crate::Db;
 
 use teloxide_core::{requests::Requester, types::Message, RequestError};
 use tracing::Instrument;
 
-pub async fn handle<R: Requester<Err = RequestError>>(
-    bot: R,
+pub async fn handle<R: Requester<Err = RequestError> + Send + Sync + 'static>(
+    bot: Arc<R>,
     msg: &Message,
     db: Db,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<()>
+where
+    R::SendMessage: Send + Sync,
+    R::DeleteMessage: Send + Sync,
+{
     if let (Some(user), Some(text)) = (msg.from(), msg.text()) {
         let username = user.username.as_ref().map(AsRef::<str>::as_ref);
 

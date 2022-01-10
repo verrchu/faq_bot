@@ -10,17 +10,23 @@ mod utils;
 
 mod handlers;
 
+use std::sync::Arc;
+
 use teloxide_core::{
     requests::Requester,
     types::{Update, UpdateKind},
     RequestError,
 };
 
-pub async fn process_update<R: Requester<Err = RequestError>>(
-    bot: R,
+pub async fn process_update<R: Requester<Err = RequestError> + Send + Sync + 'static>(
+    bot: Arc<R>,
     update: &Update,
     db: Db,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<()>
+where
+    R::SendMessage: Send + Sync,
+    R::DeleteMessage: Send + Sync,
+{
     match &update.kind {
         UpdateKind::Message(inner) => handlers::message::handle(bot, inner, db).await,
         UpdateKind::CallbackQuery(inner) => handlers::callback::handle(bot, inner, db).await,
