@@ -26,7 +26,9 @@ pub async fn handle<R: Requester<Err = RequestError>>(
             text => {
                 let span = tracing::info_span!("handle_message", username, msg.id);
 
-                text::handle(bot, msg, user, text).instrument(span).await?;
+                text::handle(bot, msg, user, text, db)
+                    .instrument(span)
+                    .await?;
             }
         }
     } else {

@@ -74,4 +74,48 @@ impl Db {
             .await
             .map_err(anyhow::Error::from)
     }
+
+    #[named]
+    pub async fn is_feedback_process_active(&mut self, user_id: i64) -> anyhow::Result<bool> {
+        tracing::debug!(user_id, "call {}", function_name!());
+
+        self.conn
+            .hexists("feedback", user_id)
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
+    #[named]
+    pub async fn get_feedback_message_id(&mut self, user_id: i64) -> anyhow::Result<Option<i32>> {
+        tracing::debug!(user_id, "call {}", function_name!());
+
+        self.conn
+            .hget("feedback", user_id)
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
+    #[named]
+    pub async fn begin_feedback_process(
+        &mut self,
+        user_id: i64,
+        message_id: i32,
+    ) -> anyhow::Result<bool> {
+        tracing::debug!(user_id, message_id, "call {}", function_name!());
+
+        self.conn
+            .hset_nx("feedback", user_id, message_id)
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
+    #[named]
+    pub async fn end_feedback_process(&mut self, user_id: i64) -> anyhow::Result<bool> {
+        tracing::debug!(user_id, "call {}", function_name!());
+
+        self.conn
+            .hdel("feedback", user_id)
+            .await
+            .map_err(anyhow::Error::from)
+    }
 }

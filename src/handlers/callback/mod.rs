@@ -1,3 +1,4 @@
+mod feedback;
 mod goto;
 mod like;
 
@@ -36,6 +37,16 @@ pub async fn handle<R: Requester<Err = RequestError>>(
             );
 
             like::handle(bot, cb, hash, db).instrument(span).await?;
+        } else if data == "/feedback" {
+            // TODO: maybe pass hash as context
+            let span = tracing::trace_span!(
+                "handle_query",
+                username,
+                query = "/feedback",
+                query.id = cb.id.as_str()
+            );
+
+            feedback::handle(bot, cb, db).instrument(span).await?;
         } else {
             tracing::warn!("unexpected callback query: {}", data);
 

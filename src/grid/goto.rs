@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::{callback, Navigation, feedback::add_feedback_button};
+use super::{callback, feedback::add_feedback_button, Navigation};
 use crate::{templates, Db, Lang};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
