@@ -5,3 +5,7 @@ db:
 
 interval:
   1s
+
+bot:
+  feedback:
+    ack_ttl: 1500ms

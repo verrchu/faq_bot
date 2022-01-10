@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::Context;
 
 use teloxide_core::{
@@ -15,6 +13,7 @@ pub async fn handle(
 ) -> anyhow::Result<()> {
     let tg = context.tg;
     let mut db = context.db;
+    let config = context.config;
 
     if let Some(feedback_message_id) = db.get_feedback_message_id(user.id).await? {
         {
@@ -51,7 +50,7 @@ pub async fn handle(
                     .await
                     .map_err(anyhow::Error::from)?;
 
-                tokio::time::sleep(Duration::from_secs(3)).await;
+                tokio::time::sleep(config.feedback.ack_ttl).await;
 
                 tg.delete_message(user.id, message.id)
                     .send()

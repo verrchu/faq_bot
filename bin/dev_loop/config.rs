@@ -7,6 +7,8 @@ pub struct Config {
     pub db: DbConfig,
     #[serde(with = "humantime_serde")]
     pub interval: Duration,
+
+    pub bot: bot::Config,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

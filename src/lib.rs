@@ -1,14 +1,19 @@
+mod grid;
 mod templates;
+mod utils;
+
 mod types;
 pub use types::{DataEntry, Lang};
 
 mod db;
 pub use db::Db;
 
-mod grid;
-mod utils;
+mod config;
+pub use config::Config;
 
 mod handlers;
+
+use std::sync::Arc;
 
 use teloxide_core::{
     adaptors::DefaultParseMode,
@@ -21,7 +26,9 @@ type Tg = DefaultParseMode<Bot>;
 #[derive(Clone)]
 pub struct Context {
     pub tg: Tg,
-    pub db: Db
+    pub db: Db,
+
+    pub config: Arc<Config>,
 }
 
 pub async fn process_update(update: &Update, context: Context) -> anyhow::Result<()> {

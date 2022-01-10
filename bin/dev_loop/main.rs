@@ -4,7 +4,7 @@ use args::Args;
 mod config;
 use config::Config;
 
-use std::{env, io::stdout};
+use std::{env, io::stdout, sync::Arc};
 
 use clap::Parser;
 use once_cell::sync::Lazy;
@@ -44,7 +44,11 @@ async fn run(config: Config) -> anyhow::Result<()> {
     let tg = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
     let db = bot::Db::connect(config.db.host, config.db.port, config.db.scripts_path).await?;
 
-    let context = bot::Context { tg, db };
+    let context = bot::Context {
+        tg,
+        db,
+        config: Arc::new(config.bot),
+    };
 
     let mut offset = 0;
     let mut get_updates = context
