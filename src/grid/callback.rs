@@ -10,7 +10,6 @@ pub fn data(cmd: Command, key: &str) -> String {
 pub enum Command {
     Goto,
     Like,
-    Feedback,
 }
 
 impl fmt::Display for Command {
@@ -18,7 +17,6 @@ impl fmt::Display for Command {
         match self {
             Self::Goto => write!(f, "goto"),
             Self::Like => write!(f, "like"),
-            Self::Feedback => write!(f, "feedback"),
         }
     }
 }

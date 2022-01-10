@@ -13,8 +13,6 @@ pub struct Navigation {
     prev: String,
     #[builder(default, setter(strip_option, into))]
     likes: Option<u64>,
-    #[builder(default)]
-    feedback: bool,
 }
 
 impl Navigation {
@@ -46,18 +44,6 @@ impl Navigation {
             ));
         }
 
-        let mut buttons = vec![Vec::from(buttons)];
-
-        if self.feedback {
-            buttons.push(vec![InlineKeyboardButton::new(
-                "FEEDBACK",
-                InlineKeyboardButtonKind::CallbackData(callback::data(
-                    callback::Command::Feedback,
-                    &self.cur,
-                )),
-            )]);
-        }
-
-        buttons
+        vec![Vec::from(buttons)]
     }
 }
