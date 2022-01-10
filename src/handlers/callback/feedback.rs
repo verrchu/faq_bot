@@ -1,21 +1,16 @@
-use crate::Db;
+use crate::{Db, Tg};
 
 use teloxide_core::{
     requests::{Request, Requester},
     types::CallbackQuery,
-    RequestError,
 };
 
-pub async fn handle<R: Requester<Err = RequestError>>(
-    bot: R,
-    cb: &CallbackQuery,
-    mut db: Db,
-) -> anyhow::Result<()> {
+pub async fn handle(tg: Tg, cb: &CallbackQuery, mut db: Db) -> anyhow::Result<()> {
     let is_active = db.is_feedback_process_active(cb.from.id).await?;
 
     // TODO: signal in query response that feedback is in progress
     if !is_active {
-        let message = bot
+        let message = tg
             .send_message(cb.from.id, "PLEASE SEND FEEDBACK")
             .send()
             .await
@@ -27,14 +22,14 @@ pub async fn handle<R: Requester<Err = RequestError>>(
         // feedback from several devices.
         // "inited" is supposed to handle this issue.
         if !inited {
-            bot.delete_message(cb.from.id, message.id)
+            tg.delete_message(cb.from.id, message.id)
                 .send()
                 .await
                 .map_err(anyhow::Error::from)?;
         }
     }
 
-    bot.answer_callback_query(&cb.id)
+    tg.answer_callback_query(&cb.id)
         .send()
         .await
         .map_err(anyhow::Error::from)?;

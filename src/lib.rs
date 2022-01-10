@@ -10,26 +10,18 @@ mod utils;
 
 mod handlers;
 
-use std::sync::Arc;
-
 use teloxide_core::{
-    requests::Requester,
+    adaptors::DefaultParseMode,
     types::{Update, UpdateKind},
-    RequestError,
+    Bot,
 };
 
-pub async fn process_update<R: Requester<Err = RequestError> + Send + Sync + 'static>(
-    bot: Arc<R>,
-    update: &Update,
-    db: Db,
-) -> anyhow::Result<()>
-where
-    R::SendMessage: Send + Sync,
-    R::DeleteMessage: Send + Sync,
-{
+type Tg = DefaultParseMode<Bot>;
+
+pub async fn process_update(tg: Tg, update: &Update, db: Db) -> anyhow::Result<()> {
     match &update.kind {
-        UpdateKind::Message(inner) => handlers::message::handle(bot, inner, db).await,
-        UpdateKind::CallbackQuery(inner) => handlers::callback::handle(bot, inner, db).await,
+        UpdateKind::Message(inner) => handlers::message::handle(tg, inner, db).await,
+        UpdateKind::CallbackQuery(inner) => handlers::callback::handle(tg, inner, db).await,
         _ => {
             tracing::warn!("unexpected update kind arrived: {:?}", update);
             Ok(())

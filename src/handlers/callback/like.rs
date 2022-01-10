@@ -1,19 +1,13 @@
-use crate::{grid, Db};
+use crate::{grid, Db, Tg};
 
 use teloxide_core::{
     payloads::setters::*,
     requests::{Request, Requester},
     types::CallbackQuery,
-    RequestError,
 };
 use tracing::Instrument;
 
-pub async fn handle<R: Requester<Err = RequestError>>(
-    bot: R,
-    cb: &CallbackQuery,
-    hash: &str,
-    mut db: Db,
-) -> anyhow::Result<()> {
+pub async fn handle(tg: Tg, cb: &CallbackQuery, hash: &str, mut db: Db) -> anyhow::Result<()> {
     let message_id = cb
         .message
         .as_ref()
@@ -32,7 +26,7 @@ pub async fn handle<R: Requester<Err = RequestError>>(
         ))
         .await?;
 
-    bot.edit_message_text(cb.from.id, message_id, header)
+    tg.edit_message_text(cb.from.id, message_id, header)
         .disable_web_page_preview(true)
         .reply_markup(keyboard)
         .send()
@@ -41,7 +35,7 @@ pub async fn handle<R: Requester<Err = RequestError>>(
 
     let icon = if liked { "👍" } else { "👎" };
 
-    bot.answer_callback_query(&cb.id)
+    tg.answer_callback_query(&cb.id)
         .text(icon)
         .send()
         .await

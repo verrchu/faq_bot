@@ -1,22 +1,12 @@
 mod command;
 mod text;
 
-use std::sync::Arc;
+use crate::{Db, Tg};
 
-use crate::Db;
-
-use teloxide_core::{requests::Requester, types::Message, RequestError};
+use teloxide_core::types::Message;
 use tracing::Instrument;
 
-pub async fn handle<R: Requester<Err = RequestError> + Send + Sync + 'static>(
-    bot: Arc<R>,
-    msg: &Message,
-    db: Db,
-) -> anyhow::Result<()>
-where
-    R::SendMessage: Send + Sync,
-    R::DeleteMessage: Send + Sync,
-{
+pub async fn handle(tg: Tg, msg: &Message, db: Db) -> anyhow::Result<()> {
     if let (Some(user), Some(text)) = (msg.from(), msg.text()) {
         let username = user.username.as_ref().map(AsRef::<str>::as_ref);
 
@@ -25,14 +15,14 @@ where
                 let span =
                     tracing::info_span!("handle_command", username, command = "/start", msg.id);
 
-                command::start::handle(bot, user, db)
+                command::start::handle(tg, user, db)
                     .instrument(span)
                     .await?;
             }
             text => {
                 let span = tracing::info_span!("handle_message", username, msg.id);
 
-                text::handle(bot, msg, user, text, db)
+                text::handle(tg, msg, user, text, db)
                     .instrument(span)
                     .await?;
             }

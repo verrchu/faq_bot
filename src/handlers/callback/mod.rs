@@ -2,20 +2,15 @@ mod feedback;
 mod goto;
 mod like;
 
-use crate::Db;
+use crate::{Db, Tg};
 
 use teloxide_core::{
     requests::{Request, Requester},
     types::CallbackQuery,
-    RequestError,
 };
 use tracing::Instrument;
 
-pub async fn handle<R: Requester<Err = RequestError>>(
-    bot: R,
-    cb: &CallbackQuery,
-    db: Db,
-) -> anyhow::Result<()> {
+pub async fn handle(tg: Tg, cb: &CallbackQuery, db: Db) -> anyhow::Result<()> {
     if let Some(data) = &cb.data {
         let username = cb.from.username.as_ref().map(AsRef::<str>::as_ref);
 
@@ -27,7 +22,7 @@ pub async fn handle<R: Requester<Err = RequestError>>(
                 query.id = cb.id.as_str()
             );
 
-            goto::handle(bot, cb, hash, db).instrument(span).await?;
+            goto::handle(tg, cb, hash, db).instrument(span).await?;
         } else if let Some(hash) = data.strip_prefix("/like#") {
             let span = tracing::trace_span!(
                 "handle_query",
@@ -36,7 +31,7 @@ pub async fn handle<R: Requester<Err = RequestError>>(
                 query.id = cb.id.as_str()
             );
 
-            like::handle(bot, cb, hash, db).instrument(span).await?;
+            like::handle(tg, cb, hash, db).instrument(span).await?;
         } else if data == "/feedback" {
             // TODO: maybe pass hash as context
             let span = tracing::trace_span!(
@@ -46,11 +41,11 @@ pub async fn handle<R: Requester<Err = RequestError>>(
                 query.id = cb.id.as_str()
             );
 
-            feedback::handle(bot, cb, db).instrument(span).await?;
+            feedback::handle(tg, cb, db).instrument(span).await?;
         } else {
             tracing::warn!("unexpected callback query: {}", data);
 
-            bot.answer_callback_query(&cb.id).send().await?;
+            tg.answer_callback_query(&cb.id).send().await?;
         }
     }
 

@@ -4,7 +4,7 @@ use args::Args;
 mod config;
 use config::Config;
 
-use std::{env, io::stdout, sync::Arc};
+use std::{env, io::stdout};
 
 use clap::Parser;
 use once_cell::sync::Lazy;
@@ -41,10 +41,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn run(config: Config) -> anyhow::Result<()> {
-    let bot = Arc::new(DefaultParseMode::new(
-        Bot::new(&*TOKEN),
-        ParseMode::MarkdownV2,
-    ));
+    let bot = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
 
     let db = bot::Db::connect(config.db.host, config.db.port, config.db.scripts_path).await?;
 
