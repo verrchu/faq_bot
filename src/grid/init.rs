@@ -1,4 +1,4 @@
-use super::callback;
+use super::{callback, feedback::add_feedback_button};
 use crate::{Db, Lang};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
@@ -23,7 +23,8 @@ pub async fn init(mut db: Db) -> anyhow::Result<(String, InlineKeyboardMarkup)> 
         })
         .collect::<Vec<Vec<InlineKeyboardButton>>>();
 
-    let next_buttons = InlineKeyboardMarkup::new(next_buttons);
+    let mut next_buttons = InlineKeyboardMarkup::new(next_buttons);
+    add_feedback_button(&mut next_buttons);
 
     Ok((format!("*{}*", header), next_buttons))
 }

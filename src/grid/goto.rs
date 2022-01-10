@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use super::{callback, Navigation};
+use super::{callback, Navigation, feedback::add_feedback_button};
 use crate::{templates, Db, Lang};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
@@ -80,7 +80,8 @@ pub async fn goto(
         text = format!("*{}*", text);
     }
 
-    let buttons = InlineKeyboardMarkup::new(buttons);
+    let mut buttons = InlineKeyboardMarkup::new(buttons);
+    add_feedback_button(&mut buttons);
 
     Ok((text, buttons))
 }
