@@ -76,7 +76,7 @@ impl Db {
     }
 
     #[named]
-    pub async fn is_feedback_process_active(&mut self, user_id: i64) -> anyhow::Result<bool> {
+    pub async fn is_feedback_active(&mut self, user_id: i64) -> anyhow::Result<bool> {
         tracing::debug!(user_id, "call {}", function_name!());
 
         self.conn
@@ -96,11 +96,7 @@ impl Db {
     }
 
     #[named]
-    pub async fn begin_feedback_process(
-        &mut self,
-        user_id: i64,
-        message_id: i32,
-    ) -> anyhow::Result<bool> {
+    pub async fn begin_feedback(&mut self, user_id: i64, message_id: i32) -> anyhow::Result<bool> {
         tracing::debug!(user_id, message_id, "call {}", function_name!());
 
         self.conn
@@ -110,7 +106,7 @@ impl Db {
     }
 
     #[named]
-    pub async fn end_feedback_process(&mut self, user_id: i64) -> anyhow::Result<bool> {
+    pub async fn end_feedback(&mut self, user_id: i64) -> anyhow::Result<bool> {
         tracing::debug!(user_id, "call {}", function_name!());
 
         self.conn

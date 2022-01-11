@@ -1,3 +1,4 @@
+mod feedback;
 mod grid;
 mod l10n;
 mod templates;

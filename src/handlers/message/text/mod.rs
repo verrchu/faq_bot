@@ -1,6 +1,4 @@
-mod feedback;
-
-use crate::Context;
+use crate::{feedback, Context};
 
 use teloxide_core::{
     requests::{Request, Requester},
