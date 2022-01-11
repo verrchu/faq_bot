@@ -41,7 +41,7 @@ pub async fn process_update(update: &Update, context: Context) -> anyhow::Result
         UpdateKind::Message(inner) => handlers::message::handle(inner, context).await,
         UpdateKind::CallbackQuery(inner) => handlers::callback::handle(inner, context).await,
         _ => {
-            tracing::warn!("unexpected update kind arrived: {:?}", update);
+            tracing::warn!("unexpected update kind: {:?}", update);
             Ok(())
         }
     }

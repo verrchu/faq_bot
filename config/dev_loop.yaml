@@ -9,4 +9,4 @@ interval:
 bot:
   feedback:
     ack_ttl: 5s
-    timeout: 5s
+    timeout: 30s

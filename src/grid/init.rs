@@ -4,6 +4,8 @@ use crate::Context;
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
 pub async fn init(context: Context) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
+    tracing::debug!("grid::init");
+
     let mut db = context.db;
     let lang = context.lang;
 

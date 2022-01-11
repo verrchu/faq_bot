@@ -10,10 +10,13 @@ use tracing::Instrument;
 pub async fn handle(user: &User, context: Context) -> anyhow::Result<()> {
     let tg = context.tg.clone();
 
+    tracing::info!("processing command /start");
+
     let (header, keyboard) = grid::init(context)
         .instrument(tracing::info_span!("grid_init"))
         .await?;
 
+    tracing::debug!("sending grid");
     tg.send_message(user.id, header)
         .disable_web_page_preview(true)
         .reply_markup(keyboard)

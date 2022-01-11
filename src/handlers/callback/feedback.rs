@@ -4,6 +4,7 @@ use teloxide_core::{
     requests::{Request, Requester},
     types::CallbackQuery,
 };
+use tracing::{Instrument, Span};
 
 pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> {
     let mut db = context.db.clone();
@@ -16,9 +17,11 @@ pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> 
     if !is_active {
         {
             let user_id = cb.from.id;
-            tokio::spawn(async move { feedback::cancel(user_id, context).await });
+            let span = Span::current();
+            tokio::spawn(async move { feedback::cancel(user_id, context).instrument(span).await });
         }
 
+        tracing::info!(context = "feedback_prelude", "tg::send_message");
         let message = tg
             .send_message(cb.from.id, l10n::messages::feedback_prelude(lang))
             .send()
@@ -31,6 +34,7 @@ pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> 
         // feedback from several devices.
         // "inited" is supposed to handle this issue.
         if !inited {
+            tracing::info!(context = "feedback_prelude", "tg::delete_message");
             tg.delete_message(cb.from.id, message.id)
                 .send()
                 .await
@@ -38,6 +42,7 @@ pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> 
         }
     }
 
+    tracing::debug!("tg::answer_callback_query");
     tg.answer_callback_query(&cb.id)
         .send()
         .await

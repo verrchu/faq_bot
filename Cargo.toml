@@ -22,6 +22,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = "0.15"
 typed-builder = "0.9"
 futures = "0.3"
+humantime = "2"
 
 [dependencies.redis]
 version = "0.21"

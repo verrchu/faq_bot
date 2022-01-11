@@ -23,12 +23,13 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow:
     let liked = db.toggle_like(key_str, cb.from.id).await?;
 
     let (header, keyboard) = grid::goto(key.clone(), false, context)
-        .instrument(tracing::trace_span!(
-            "grid_goto",
+        .instrument(tracing::info_span!(
+            "grid::goto",
             key = key.to_str().unwrap()
         ))
         .await?;
 
+    tracing::info!(context = "update likes", "tg::edit_message_text");
     tg.edit_message_text(cb.from.id, message_id, header)
         .disable_web_page_preview(true)
         .reply_markup(keyboard)
@@ -38,6 +39,7 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow:
 
     let icon = if liked { "👍" } else { "👎" };
 
+    tracing::info!(msg = icon, "tg::answer_callback_query");
     tg.answer_callback_query(&cb.id)
         .text(icon)
         .send()

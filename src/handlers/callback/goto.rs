@@ -20,12 +20,10 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow:
     let key = db.get_key(hash).await?;
 
     let (header, keyboard) = grid::goto(key.clone(), true, context)
-        .instrument(tracing::trace_span!(
-            "grid_goto",
-            key = key.to_str().unwrap()
-        ))
+        .instrument(tracing::info_span!("grid::goto",))
         .await?;
 
+    tracing::info!(context = "update grid", "tg::edit_message_text");
     tg.edit_message_text(cb.from.id, message_id, header)
         .disable_web_page_preview(true)
         .reply_markup(keyboard)
@@ -33,6 +31,7 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow:
         .await
         .map_err(anyhow::Error::from)?;
 
+    tracing::debug!("tg::answer_callback_query");
     tg.answer_callback_query(&cb.id).send().await?;
 
     Ok(())

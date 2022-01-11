@@ -16,6 +16,8 @@ pub async fn goto(
 
     let key_str = key.to_str().unwrap();
 
+    tracing::info!(key = key_str, visit, "grid::goto");
+
     let components_count = key.components().count();
 
     let header = db.get_grid_header(key_str, lang.as_str()).await?;

@@ -4,6 +4,7 @@ use teloxide_core::{
     requests::{Request, Requester},
     types::{Message, User},
 };
+use tracing::{Instrument, Span};
 
 pub async fn handle(
     msg: &Message,
@@ -20,10 +21,11 @@ pub async fn handle(
             .map_err(anyhow::Error::from)?;
 
         {
-            let user_id = user.id;
-            tokio::spawn(async move { feedback::ack(user_id, context).await });
+            let (user_id, span) = (user.id, Span::current());
+            tokio::spawn(async move { feedback::ack(user_id, context).instrument(span).await });
         }
     } else {
+        tracing::warn!(context = "unexpected message", "tg::delete_message");
         tg.delete_message(user.id, msg.id)
             .send()
             .await

@@ -19,6 +19,8 @@ pub struct Context {
 }
 
 pub fn render(context: Context, lang: Lang) -> anyhow::Result<String> {
+    tracing::debug!(lang = lang.as_str(), "template::render::data_entry");
+
     let context = tera::Context::from_serialize(context).map_err(anyhow::Error::from)?;
 
     let template = match lang {
