@@ -1,4 +1,4 @@
-use crate::{feedback, l10n, Context};
+use crate::{db, feedback, l10n, Context};
 
 use teloxide_core::{
     requests::{Request, Requester},
@@ -6,18 +6,16 @@ use teloxide_core::{
 };
 use tracing::{Instrument, Span};
 
-pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> {
-    let mut db = context.db.clone();
+pub async fn handle(cb: &CallbackQuery, mut context: Context) -> anyhow::Result<()> {
     let tg = context.tg.clone();
     let lang = context.lang;
 
-    let is_active = db.is_feedback_active(cb.from.id).await?;
+    let is_active = db::feedback::is_active(&mut context.db, cb.from.id).await?;
 
     // TODO: signal in query response that feedback is in progress
     if !is_active {
         {
-            let user_id = cb.from.id;
-            let span = Span::current();
+            let (user_id, context, span) = (cb.from.id, context.clone(), Span::current());
             tokio::spawn(async move { feedback::cancel(user_id, context).instrument(span).await });
         }
 
@@ -28,7 +26,7 @@ pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> 
             .await
             .map_err(anyhow::Error::from)?;
 
-        let inited = db.begin_feedback(cb.from.id, message.id).await?;
+        let inited = db::feedback::begin(&mut context.db, cb.from.id, message.id).await?;
 
         // there might be a rare condition when one user tries to submit
         // feedback from several devices.

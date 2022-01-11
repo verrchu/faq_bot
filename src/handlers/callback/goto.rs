@@ -1,4 +1,4 @@
-use crate::{grid, Context};
+use crate::{db, grid, Context};
 
 use teloxide_core::{
     payloads::setters::*,
@@ -7,8 +7,7 @@ use teloxide_core::{
 };
 use tracing::Instrument;
 
-pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow::Result<()> {
-    let mut db = context.db.clone();
+pub async fn handle(cb: &CallbackQuery, hash: &str, mut context: Context) -> anyhow::Result<()> {
     let tg = context.tg.clone();
 
     let message_id = cb
@@ -17,7 +16,7 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow:
         .map(|message| message.id)
         .ok_or_else(|| anyhow::anyhow!("no message in callback query: {:?}", cb))?;
 
-    let key = db.get_key(hash).await?;
+    let key = db::utils::get_key(&mut context.db, hash).await?;
 
     let (header, keyboard) = grid::goto(key.clone(), true, context)
         .instrument(tracing::info_span!("grid::goto",))

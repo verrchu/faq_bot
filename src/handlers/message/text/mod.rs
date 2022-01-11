@@ -1,4 +1,4 @@
-use crate::{feedback, Context};
+use crate::{db, feedback, Context};
 
 use teloxide_core::{
     requests::{Request, Requester},
@@ -10,12 +10,13 @@ pub async fn handle(
     msg: &Message,
     user: &User,
     text: &str,
-    context: Context,
+    mut context: Context,
 ) -> anyhow::Result<()> {
     let tg = context.tg.clone();
-    let mut db = context.db.clone();
 
-    if let Some(feedback_message_id) = db.get_feedback_message_id(user.id).await? {
+    if let Some(feedback_message_id) =
+        db::feedback::get_prelude_message_id(&mut context.db, user.id).await?
+    {
         feedback::cleanup(user.id, feedback_message_id, msg.id, context.clone())
             .await
             .map_err(anyhow::Error::from)?;

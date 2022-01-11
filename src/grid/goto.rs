@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use super::{callback, feedback::add_feedback_button, Navigation};
-use crate::{l10n::templates, Context};
+use crate::{db, l10n::templates, Context};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
@@ -9,9 +9,8 @@ pub async fn goto(
     key: PathBuf,
     // FIXME: this hack is supposed to prevent vies increment on renders after like
     visit: bool,
-    context: Context,
+    mut context: Context,
 ) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
-    let mut db = context.db;
     let lang = context.lang;
 
     let key_str = key.to_str().unwrap();
@@ -20,17 +19,17 @@ pub async fn goto(
 
     let components_count = key.components().count();
 
-    let header = db.get_grid_header(key_str, lang.as_str()).await?;
+    let header = db::grid::get_grid_header(&mut context.db, key_str, lang.as_str()).await?;
 
     let mut text = header.clone();
     let mut buttons = vec![];
 
-    if db.is_data_entry(key_str).await? {
+    if db::grid::is_data_entry(&mut context.db, key_str).await? {
         if visit {
-            db.inc_views(key_str).await?;
+            db::grid::inc_views(&mut context.db, key_str).await?;
         }
 
-        let data_entry = db.get_data_entry(key_str, lang.as_str()).await?;
+        let data_entry = db::grid::get_data_entry(&mut context.db, key_str, lang.as_str()).await?;
 
         let likes = data_entry.likes;
 
@@ -54,8 +53,7 @@ pub async fn goto(
 
         buttons.append(&mut navigation.render());
     } else {
-        let next_buttons = db
-            .get_next_buttons(key_str, lang.as_str())
+        let next_buttons = db::grid::get_next_buttons(&mut context.db, key_str, lang.as_str())
             .await?
             .into_iter()
             .map(|(key, name)| {

@@ -1,12 +1,11 @@
-use crate::{l10n, Context};
+use crate::{db, l10n, Context};
 
 use futures::try_join;
 use humantime::format_duration;
 use teloxide_core::requests::{Request, Requester};
 
-pub async fn cancel(user_id: i64, context: Context) -> anyhow::Result<()> {
+pub async fn cancel(user_id: i64, mut context: Context) -> anyhow::Result<()> {
     let tg = context.tg;
-    let mut db = context.db;
 
     let timeout = context.config.feedback.timeout;
     let timeout_str = format_duration(timeout).to_string();
@@ -15,7 +14,7 @@ pub async fn cancel(user_id: i64, context: Context) -> anyhow::Result<()> {
 
     tokio::time::sleep(timeout).await;
 
-    if let Some(fb_req_msg_id) = db.cancel_feedback(user_id).await? {
+    if let Some(fb_req_msg_id) = db::feedback::cancel(&mut context.db, user_id).await? {
         tracing::info!(context = "feedback_cancel", "tg::delete_message");
         tg.delete_message(user_id, fb_req_msg_id)
             .send()
@@ -32,10 +31,9 @@ pub async fn cleanup(
     user_id: i64,
     fb_req_msg_id: i32,
     fb_res_msg_id: i32,
-    context: Context,
+    mut context: Context,
 ) -> anyhow::Result<()> {
     let tg = context.tg;
-    let mut db = context.db;
 
     try_join!(
         {
@@ -49,7 +47,7 @@ pub async fn cleanup(
     )
     .map_err(anyhow::Error::from)?;
 
-    db.end_feedback(user_id).await?;
+    db::feedback::end(&mut context.db, user_id).await?;
 
     Ok(())
 }
