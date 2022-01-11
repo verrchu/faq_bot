@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use super::{callback, feedback::add_feedback_button, Navigation};
-use crate::{templates, Context};
+use crate::{l10n::templates, Context};
 
 use teloxide_core::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup};
 
