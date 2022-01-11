@@ -1,5 +1,6 @@
 use crate::{l10n, Context};
 
+use futures::try_join;
 use teloxide_core::requests::{Request, Requester};
 
 pub async fn cleanup(
@@ -11,15 +12,11 @@ pub async fn cleanup(
     let tg = context.tg;
     let mut db = context.db;
 
-    tg.delete_message(user_id, fb_req_msg_id)
-        .send()
-        .await
-        .map_err(anyhow::Error::from)?;
-
-    tg.delete_message(user_id, fb_res_msg_id)
-        .send()
-        .await
-        .map_err(anyhow::Error::from)?;
+    try_join!(
+        tg.delete_message(user_id, fb_req_msg_id).send(),
+        tg.delete_message(user_id, fb_res_msg_id).send()
+    )
+    .map_err(anyhow::Error::from)?;
 
     db.end_feedback_process(user_id).await?;
 

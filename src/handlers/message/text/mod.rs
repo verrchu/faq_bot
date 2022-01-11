@@ -17,15 +17,12 @@ pub async fn handle(
     let mut db = context.db.clone();
 
     if let Some(feedback_message_id) = db.get_feedback_message_id(user.id).await? {
-        {
-            let (user_id, msg_id, context) = (user.id, msg.id, context.clone());
-            tokio::spawn(async move {
-                feedback::cleanup(user_id, feedback_message_id, msg_id, context).await
-            });
-        }
+        feedback::cleanup(user.id, feedback_message_id, msg.id, context.clone())
+            .await
+            .map_err(anyhow::Error::from)?;
 
         {
-            let (user_id, context) = (user.id, context);
+            let user_id = user.id;
             tokio::spawn(async move { feedback::ack(user_id, context).await });
         }
     } else {
