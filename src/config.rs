@@ -11,4 +11,6 @@ pub struct Config {
 pub struct FeedbackConfig {
     #[serde(with = "humantime_serde")]
     pub ack_ttl: Duration,
+    #[serde(with = "humantime_serde")]
+    pub timeout: Duration,
 }

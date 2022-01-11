@@ -9,6 +9,7 @@ pub(super) struct Scripts {
     get_grid_header: Script,
     get_data_entry: Script,
     toggle_like: Script,
+    cancel_feedback: Script,
 }
 
 impl Scripts {
@@ -16,7 +17,8 @@ impl Scripts {
         Ok(Self {
             get_grid_header: load_script(path.clone(), "get_grid_header")?,
             get_data_entry: load_script(path.clone(), "get_data_entry")?,
-            toggle_like: load_script(path, "toggle_like")?,
+            toggle_like: load_script(path.clone(), "toggle_like")?,
+            cancel_feedback: load_script(path, "cancel_feedback")?,
         })
     }
 }
@@ -67,6 +69,19 @@ impl Db {
 
         invocation
             .arg(key)
+            .arg(user)
+            .invoke_async(&mut self.conn)
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
+    #[named]
+    pub async fn cancel_feedback(&mut self, user: i64) -> anyhow::Result<Option<i32>> {
+        tracing::debug!(user, "call {}", function_name!());
+
+        let mut invocation = self.scripts.cancel_feedback.prepare_invoke();
+
+        invocation
             .arg(user)
             .invoke_async(&mut self.conn)
             .await
