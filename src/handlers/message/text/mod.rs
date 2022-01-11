@@ -17,6 +17,14 @@ pub async fn handle(
     if let Some(feedback_message_id) =
         db::feedback::get_prelude_message_id(&mut context.db, user.id).await?
     {
+        let username = user
+            .username
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("user has no username: {:?}", user))?;
+
+        tracing::info!("publish feedback");
+        db::feedback::publish(&mut context.db, username, text).await?;
+
         feedback::cleanup(user.id, feedback_message_id, msg.id, context.clone())
             .await
             .map_err(anyhow::Error::from)?;

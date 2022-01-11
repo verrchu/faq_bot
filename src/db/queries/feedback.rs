@@ -1,9 +1,22 @@
-use crate::Db;
+use crate::{types::Feedback, Db};
 
 use function_name::named;
 use redis::AsyncCommands;
 
 static FEEDBACK_PENDING: &str = "feedback:pending";
+static FEEDBACK_STREAM: &str = "feedback:stream";
+
+#[named]
+pub async fn publish(db: &mut Db, username: &str, text: &str) -> anyhow::Result<String> {
+    tracing::debug!(username, "db::feedback::{}", function_name!());
+
+    let feedback = Feedback::builder().username(username).text(text).build();
+
+    db.conn
+        .xadd(FEEDBACK_STREAM, "*", &feedback.as_pairs())
+        .await
+        .map_err(anyhow::Error::from)
+}
 
 #[named]
 pub async fn is_active(db: &mut Db, user_id: i64) -> anyhow::Result<bool> {
