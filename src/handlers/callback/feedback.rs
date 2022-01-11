@@ -1,5 +1,6 @@
 use crate::{db, feedback, l10n, Context};
 
+use humantime::format_duration;
 use teloxide_core::{
     requests::{Request, Requester},
     types::CallbackQuery,
@@ -16,7 +17,16 @@ pub async fn handle(cb: &CallbackQuery, mut context: Context) -> anyhow::Result<
     if !is_active {
         {
             let (user_id, context, span) = (cb.from.id, context.clone(), Span::current());
-            tokio::spawn(async move { feedback::cancel(user_id, context).instrument(span).await });
+            tokio::spawn(async move {
+                let timeout = context.config.feedback.timeout;
+                let timeout_str = format_duration(timeout).to_string();
+
+                tracing::debug!(delay = timeout_str.as_str(), "scheduling feedback::cancel");
+
+                tokio::time::sleep(timeout).await;
+
+                feedback::cancel(user_id, context).instrument(span).await
+            });
         }
 
         tracing::info!(context = "feedback_prelude", "tg::send_message");

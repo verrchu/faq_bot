@@ -7,13 +7,6 @@ use teloxide_core::requests::{Request, Requester};
 pub async fn cancel(user_id: i64, mut context: Context) -> anyhow::Result<()> {
     let tg = context.tg;
 
-    let timeout = context.config.feedback.timeout;
-    let timeout_str = format_duration(timeout).to_string();
-
-    tracing::info!(delay = timeout_str.as_str(), "scheduling feedback::cancel");
-
-    tokio::time::sleep(timeout).await;
-
     if let Some(fb_req_msg_id) = db::feedback::cancel(&mut context.db, user_id).await? {
         tracing::info!(context = "feedback_cancel", "tg::delete_message");
         tg.delete_message(user_id, fb_req_msg_id)

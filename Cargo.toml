@@ -27,7 +27,7 @@ humantime = "2"
 [dependencies.redis]
 version = "0.21"
 default-features = false
-features = ["aio", "tokio-comp", "connection-manager", "script"]
+features = ["aio", "tokio-comp", "connection-manager", "script", "streams"]
 
 
 [[bin]]

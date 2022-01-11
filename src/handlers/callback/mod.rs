@@ -11,6 +11,8 @@ use teloxide_core::{
 use tracing::Instrument;
 
 pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> {
+    crate::feedback::cancel(cb.from.id, context.clone()).await?;
+
     if let Some(data) = &cb.data {
         let username = cb.from.username.as_ref().map(AsRef::<str>::as_ref);
         let lang = context.lang.as_str();

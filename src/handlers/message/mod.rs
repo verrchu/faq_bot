@@ -15,6 +15,8 @@ pub async fn handle(msg: &Message, context: Context) -> anyhow::Result<()> {
 
         match text {
             "/start" => {
+                crate::feedback::cancel(user.id, context.clone()).await?;
+
                 let span = tracing::info_span!(
                     "handle_command",
                     username,

@@ -24,9 +24,17 @@ impl Db {
 
         let scripts = Scripts::load(scripts_path)?;
 
-        Ok(Self {
+        let mut this = Self {
             conn,
             scripts: Arc::new(scripts),
-        })
+        };
+
+        Self::init(&mut this).await.map(|_| this)
+    }
+
+    async fn init(&mut self) -> anyhow::Result<()> {
+        // TODO: maybe it would be better to cancel all pending feedbacks
+        // rather than silently forget them
+        feedback::vanish(self).await
     }
 }
