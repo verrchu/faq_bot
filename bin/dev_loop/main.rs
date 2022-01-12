@@ -6,6 +6,8 @@ use config::Config;
 
 use std::{env, io::stdout, sync::Arc};
 
+use help_desk_bot as bot;
+
 use clap::Parser;
 use once_cell::sync::Lazy;
 use teloxide_core::{

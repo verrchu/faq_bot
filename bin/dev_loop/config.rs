@@ -1,5 +1,7 @@
 use std::{fs::File, net::Ipv4Addr, path::PathBuf, time::Duration};
 
+use super::bot;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
