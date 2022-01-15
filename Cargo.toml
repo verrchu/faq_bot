@@ -29,7 +29,6 @@ version = "0.21"
 default-features = false
 features = ["aio", "tokio-comp", "connection-manager", "script", "streams"]
 
-
 [[bin]]
 name = "dev_loop"
 path = "bin/dev_loop/main.rs"
