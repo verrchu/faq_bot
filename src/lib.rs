@@ -21,7 +21,9 @@ use teloxide_core::{
     types::{Update, UpdateKind},
     Bot,
 };
+use tracing::Instrument;
 use typed_builder::TypedBuilder;
+use ulid::Ulid;
 
 type Tg = DefaultParseMode<Bot>;
 
@@ -37,12 +39,18 @@ pub struct Context {
 }
 
 pub async fn process_update(update: &Update, context: Context) -> anyhow::Result<()> {
-    match &update.kind {
-        UpdateKind::Message(inner) => handlers::message::handle(inner, context).await,
-        UpdateKind::CallbackQuery(inner) => handlers::callback::handle(inner, context).await,
-        _ => {
-            tracing::warn!("unexpected update kind: {:?}", update);
-            Ok(())
+    let span = tracing::info_span!("update", id = Ulid::new().to_string().as_str());
+
+    let block = async {
+        match &update.kind {
+            UpdateKind::Message(inner) => handlers::message::handle(inner, context).await,
+            UpdateKind::CallbackQuery(inner) => handlers::callback::handle(inner, context).await,
+            _ => {
+                tracing::warn!("unexpected update kind: {:?}", update);
+                Ok(())
+            }
         }
-    }
+    };
+
+    block.instrument(span).await
 }

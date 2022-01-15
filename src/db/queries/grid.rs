@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use crate::{DataEntry, Db};
 
+use anyhow::Context;
 use function_name::named;
 use redis::AsyncCommands;
 
@@ -12,7 +13,7 @@ pub async fn inc_views(db: &mut Db, key: &str) -> anyhow::Result<u64> {
     db.conn
         .incr(format!("{}:views", key), 1)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::grid::{}", function_name!()))
 }
 
 #[named]
@@ -26,7 +27,7 @@ pub async fn get_next_buttons(
     db.conn
         .hgetall(format!("{}:next:{}", key, lang))
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::grid::{}", function_name!()))
 }
 
 #[named]
@@ -36,7 +37,7 @@ pub async fn is_data_entry(db: &mut Db, key: &str) -> anyhow::Result<bool> {
     db.conn
         .sismember("data_entries", key)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::grid::{}", function_name!()))
 }
 
 #[named]
@@ -50,7 +51,7 @@ pub async fn toggle_like(db: &mut Db, key: &str, user: i64) -> anyhow::Result<bo
         .arg(user)
         .invoke_async(&mut db.conn)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::grid::{}", function_name!()))
 }
 
 #[named]
@@ -64,12 +65,12 @@ pub async fn get_grid_header(db: &mut Db, key: &str, lang: &str) -> anyhow::Resu
         .arg(lang)
         .invoke_async(&mut db.conn)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::grid::{}", function_name!()))
 }
 
 #[named]
 pub async fn get_data_entry(db: &mut Db, key: &str, lang: &str) -> anyhow::Result<DataEntry> {
-    tracing::debug!(key, lang, "call {}", function_name!());
+    tracing::debug!(key, lang, "db::grid::{}", function_name!());
 
     let mut invocation = db.scripts.get_data_entry.prepare_invoke();
 
@@ -78,7 +79,11 @@ pub async fn get_data_entry(db: &mut Db, key: &str, lang: &str) -> anyhow::Resul
         .arg(lang)
         .invoke_async::<_, HashMap<String, String>>(&mut db.conn)
         .await
-        .map_err(anyhow::Error::from)?;
+        .context(format!("db::grid::{}", function_name!()))?;
 
-    DataEntry::try_from(raw)
+    DataEntry::try_from(raw.clone()).context(format!(
+        "db::grid::{} (failed to parse DataEntry: {:?})",
+        function_name!(),
+        raw
+    ))
 }

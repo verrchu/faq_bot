@@ -1,5 +1,6 @@
 use crate::{types::Feedback, Db};
 
+use anyhow::Context;
 use function_name::named;
 use redis::AsyncCommands;
 
@@ -15,7 +16,7 @@ pub async fn publish(db: &mut Db, username: &str, text: &str) -> anyhow::Result<
     db.conn
         .xadd(FEEDBACK_STREAM, "*", &feedback.as_pairs())
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::feedback::{}", function_name!()))
 }
 
 #[named]
@@ -25,7 +26,7 @@ pub async fn is_active(db: &mut Db, user_id: i64) -> anyhow::Result<bool> {
     db.conn
         .hexists(FEEDBACK_PENDING, user_id)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::feedback::{}", function_name!()))
 }
 
 #[named]
@@ -35,7 +36,7 @@ pub async fn get_prelude_message_id(db: &mut Db, user_id: i64) -> anyhow::Result
     db.conn
         .hget(FEEDBACK_PENDING, user_id)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::feedback::{}", function_name!()))
 }
 
 #[named]
@@ -45,7 +46,7 @@ pub async fn begin(db: &mut Db, user_id: i64, message_id: i32) -> anyhow::Result
     db.conn
         .hset_nx(FEEDBACK_PENDING, user_id, message_id)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::feedback::{}", function_name!()))
 }
 
 #[named]
@@ -55,7 +56,7 @@ pub async fn end(db: &mut Db, user_id: i64) -> anyhow::Result<bool> {
     db.conn
         .hdel(FEEDBACK_PENDING, user_id)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::feedback::{}", function_name!()))
 }
 
 #[named]
@@ -65,7 +66,7 @@ pub async fn vanish(db: &mut Db) -> anyhow::Result<()> {
     db.conn
         .del(FEEDBACK_PENDING)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::feedback::{}", function_name!()))
 }
 
 #[named]
@@ -78,5 +79,5 @@ pub async fn cancel(db: &mut Db, user: i64) -> anyhow::Result<Option<i32>> {
         .arg(user)
         .invoke_async(&mut db.conn)
         .await
-        .map_err(anyhow::Error::from)
+        .context(format!("db::feedback::{}", function_name!()))
 }

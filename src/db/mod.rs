@@ -6,6 +6,7 @@ pub use queries::{feedback, grid, utils};
 
 use std::{net::Ipv4Addr, path::PathBuf, sync::Arc};
 
+use anyhow::Context;
 use redis::{aio::ConnectionManager, Client};
 
 #[derive(Clone)]
@@ -20,9 +21,9 @@ impl Db {
 
         let conn = ConnectionManager::new(client)
             .await
-            .map_err(anyhow::Error::from)?;
+            .context("failed to connect to db")?;
 
-        let scripts = Scripts::load(scripts_path)?;
+        let scripts = Scripts::load(scripts_path).context("failed to load db scripts")?;
 
         let mut this = Self {
             conn,

@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use anyhow::Context;
 use redis::Script;
 
 pub(super) struct Scripts {
@@ -22,7 +23,10 @@ impl Scripts {
 
 fn load_script(mut path: PathBuf, name: &str) -> anyhow::Result<Script> {
     path.push(format!("{}.lua", name));
-    let code = std::fs::read_to_string(path).map_err(anyhow::Error::from)?;
+    let code = std::fs::read_to_string(path.clone()).context(format!(
+        "failed to read db script: (name: {}, path: {:?})",
+        name, path
+    ))?;
 
     Ok(Script::new(&code))
 }
