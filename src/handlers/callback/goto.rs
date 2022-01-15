@@ -7,7 +7,7 @@ use teloxide_core::{
 };
 use tracing::Instrument;
 
-pub async fn handle(cb: &CallbackQuery, hash: &str, mut context: Context) -> anyhow::Result<()> {
+pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow::Result<()> {
     let tg = context.tg.clone();
 
     let message_id = cb
@@ -16,7 +16,7 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, mut context: Context) -> any
         .map(|message| message.id)
         .ok_or_else(|| anyhow::anyhow!("no message in callback query: {:?}", cb))?;
 
-    let key = db::utils::get_key(&mut context.db, hash).await?;
+    let key = db::utils::get_key(context.db.clone(), hash.to_string()).await?;
 
     let (header, keyboard) = grid::goto(key.clone(), true, context)
         .instrument(tracing::info_span!("grid::goto",))

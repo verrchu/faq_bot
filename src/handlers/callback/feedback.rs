@@ -7,11 +7,11 @@ use teloxide_core::{
 };
 use tracing::{Instrument, Span};
 
-pub async fn handle(cb: &CallbackQuery, mut context: Context) -> anyhow::Result<()> {
+pub async fn handle(cb: &CallbackQuery, context: Context) -> anyhow::Result<()> {
     let tg = context.tg.clone();
     let lang = context.lang;
 
-    let is_active = db::feedback::is_active(&mut context.db, cb.from.id).await?;
+    let is_active = db::feedback::is_active(context.db.clone(), cb.from.id).await?;
 
     // TODO: signal in query response that feedback is in progress
     if !is_active {
@@ -36,7 +36,7 @@ pub async fn handle(cb: &CallbackQuery, mut context: Context) -> anyhow::Result<
             .await
             .map_err(anyhow::Error::from)?;
 
-        let inited = db::feedback::begin(&mut context.db, cb.from.id, message.id).await?;
+        let inited = db::feedback::begin(context.db.clone(), cb.from.id, message.id).await?;
 
         // there might be a rare condition when one user tries to submit
         // feedback from several devices.

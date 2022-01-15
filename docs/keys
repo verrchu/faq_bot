@@ -1,0 +1,41 @@
+- {l10n:$LANG}:$SEGMENT:name
+
+localized key segment name
+
+example:
+key - /a/b
+{l10n:en}:a:name -> A
+{L10n:en}:b:name -> B
+{l10n:ru}:a:name -> А
+{L10n:en}:b:name -> Б
+
+- {l10n:none}:$PATH:icon (optional)
+
+nonlocalized icon
+
+example:
+key = /a/b
+{l10n:none}:/a/b:icon -> 😚
+
+- key_hashes (HASH)
+
+key hash -> key mapping
+
+- data_entries (SET)
+
+list of data entry keys
+
+- {l10n:none}:$PATH:created
+
+unix tiestamp of entry addition
+
+- {l10n:$LANG}:$PATH:data
+
+localized data
+
+- {l10n:$LANG}:$PATH:next (HASH)
+
+example
+
+{l10n:en}:/a:next -> {/a/b: 'Some data in English'}
+{l10n:ru}:/a:next -> {/a/b: 'Что-то по-русски'}

@@ -1,7 +1,8 @@
 local key = ARGV[1]
+local lang = ARGV[2]
 
 if key == '/' then
-    local name_key = string.gsub('/:name:$lang', '%$(%w+)', {lang=ARGV[2]})
+    local name_key = string.gsub('{l10n:$lang}:/:name', '%$(%w+)', {lang=lang})
     return redis.pcall('get', name_key)
 else
     local segments = {}
@@ -11,7 +12,7 @@ else
 
     local name_keys = {}
     for i, segment in pairs(segments) do
-        name_keys[i] = string.gsub('$segment:name:$lang', '%$(%w+)', {segment=segment, lang=ARGV[2]})
+        name_keys[i] = string.gsub('{l10n:$lang}:$segment:name', '%$(%w+)', {segment=segment, lang=lang})
     end
 
     local names = redis.pcall('mget', unpack(name_keys))

@@ -37,14 +37,12 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let config = Config::load(args.config)?;
 
-    tracing::info!("starting with config: {:?}", config);
-
     run(config).await
 }
 
 async fn run(config: Config) -> anyhow::Result<()> {
     let tg = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
-    let db = bot::Db::connect(config.db.host, config.db.port, config.db.scripts_path).await?;
+    let db = bot::Db::connect(&config.bot.db).await?;
 
     let context = bot::Context::builder()
         .tg(tg)

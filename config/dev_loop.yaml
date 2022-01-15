@@ -1,8 +1,3 @@
-db:
-  host: 127.0.0.1
-  port: 6379
-  scripts_path: ./redis
-
 interval:
   1s
 
@@ -10,3 +5,13 @@ bot:
   feedback:
     ack_ttl: 5s
     timeout: 30s
+  db:
+    nodes:
+      - redis://127.0.0.1:7000
+      - redis://127.0.0.1:7001
+      - redis://127.0.0.1:7002
+      - redis://127.0.0.1:7003
+      - redis://127.0.0.1:7004
+      - redis://127.0.0.1:7005
+    scripts_path: ./redis
+    connection_timeout: 1m

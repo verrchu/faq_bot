@@ -7,19 +7,26 @@ import yaml
 
 from argparse import ArgumentParser
 from hashlib import md5
-from redis import Redis
+from rediscluster import RedisCluster
 from time import time
 
 NAME_FILE = '_name'
 DATA_DIR = '_data'
 ROOT = '/'
 
+NODES = [
+        {'host': '127.0.0.1', 'port': 7000},
+        {'host': '127.0.0.1', 'port': 7001},
+        {'host': '127.0.0.1', 'port': 7002},
+        {'host': '127.0.0.1', 'port': 7003},
+        {'host': '127.0.0.1', 'port': 7004},
+        {'host': '127.0.0.1', 'port': 7005},
+]
+
 parser = ArgumentParser()
 parser.add_argument('--dry-run', action='store_true')
 parser.add_argument('--path', type=str, required=True)
 parser.add_argument('--langs', nargs='+', default=['ru'])
-parser.add_argument('--db-host', type=str, default='localhost')
-parser.add_argument('--db-port', type=int, default=6379)
 parser.add_argument('--log-level',
                     '-l',
                     type=str,
@@ -30,7 +37,7 @@ args = parser.parse_args()
 DRY_RUN = args.dry_run
 LANGS = set(args.langs)
 
-db = Redis(host=args.db_host, port=args.db_port, decode_responses=True)
+db = RedisCluster(startup_nodes=NODES, decode_responses=True)
 
 
 def process_root(dir):
@@ -66,12 +73,10 @@ def process_root(dir):
 
         if not DRY_RUN:
             for lang in LANGS:
-                segment_name = db.get(f'{segment}:name:{lang}')
-                key_icon = db.get(f'{key}:icon')
-
+                segment_name = db.get(f'{{l10n:{lang}}}:{segment}:name')
+                key_icon = db.get(f'{{l10n:none}}:{key}:icon')
                 l10n = f'{key_icon} {segment_name}' if key_icon else segment_name
-
-                db.hset(f'/:next:{lang}', key, l10n)
+                DRY_RUN or db.hset(f'{{l10n:{lang}}}:/:next', key, l10n)
 
 
 
@@ -110,8 +115,6 @@ def process_child(dir, base_dir):
         segment = entry
         key = os.path.join(root_path, entry)
 
-        DRY_RUN or db.sadd(f'{root_path}:next', key)
-
         entry = os.path.join(dir, entry)
         if not os.path.isdir(entry):
             abort(f'{entry} is not a directory')
@@ -120,12 +123,12 @@ def process_child(dir, base_dir):
 
         if not DRY_RUN:
             for lang in LANGS:
-                segment_name = db.get(f'{segment}:name:{lang}')
-                key_icon = db.get(f'{key}:icon')
+                segment_name = db.get(f'{{l10n:{lang}}}:{segment}:name')
+                key_icon = db.get(f'{{l10n:none}}:{key}:icon')
 
                 l10n = f'{key_icon} {segment_name}' if key_icon else segment_name
 
-                db.hset(f'{root_path}:next:{lang}', key, l10n)
+                db.hset(f'{{l10n:{lang}}}:{root_path}:next', key, l10n)
 
 
 def load_data(data_dir, base_dir):
@@ -133,7 +136,8 @@ def load_data(data_dir, base_dir):
     logging.info(f'loading data for {root_path}')
     data_entries = set(os.listdir(data_dir))
 
-    DRY_RUN or db.setnx(f'{root_path}:created', unixtime())
+    DRY_RUN or db.setnx(f'{{l10n:none}}:{root_path}:created', unixtime())
+    DRY_RUN or db.setnx(f'{{l10n:none}}:{root_path}:views', 0)
 
     for entry in data_entries:
         entry = os.path.join(data_dir, entry)
@@ -145,7 +149,7 @@ def load_data(data_dir, base_dir):
             abort(f'{root_path} has no l10n defined for {lang}')
         data = open(os.path.join(data_dir, lang), 'r').read()
         logging.debug(f'loading {root_path} data for {lang}')
-        DRY_RUN or db.set(f'{root_path}:data:{lang}', data)
+        DRY_RUN or db.set(f'{{l10n:{lang}}}:{root_path}:data', data)
 
     diff = data_entries.difference(LANGS)
     if len(diff):
@@ -168,7 +172,9 @@ def load_key_icon(dir, base_dir):
     if 'icon' in name_file:
         icon = name_file['icon']
         logging.info(f'loading icon {icon} for {root_path}')
-        DRY_RUN or db.set(f'{root_path}:icon', icon)
+        key = f'{{l10n:none}}:{root_path}:icon'
+        logging.debug(f'SET {key} {icon}')
+        DRY_RUN or db.set(key, icon)
 
 
 def load_segment_name(dir, base_dir):
@@ -193,7 +199,11 @@ def load_segment_name(dir, base_dir):
             abort(f'segment {segment} has no defined l10n for {lang}')
         logging.debug(
             f'loading segment {segment} l10n for {lang}: {name_l10n[lang]}')
-        DRY_RUN or db.set(f'{segment}:name:{lang}', name_l10n[lang])
+
+        key = f'{{l10n:{lang}}}:{segment}:name'
+        value = name_l10n[lang]
+        logging.debug(f'SET {key} {value}')
+        DRY_RUN or db.set(key, value)
 
     diff = langs.difference(LANGS)
     if len(diff):

@@ -1,7 +1,7 @@
 local key = ARGV[1]
 local user = ARGV[2]
 
-local call_key = string.gsub('$key:likes', '%$(%w+)', {key=key})
+local call_key = string.gsub('{l10n:none}:$key:likes', '%$(%w+)', {key=key})
 local is_member = redis.pcall('sismember', call_key, user)
 
 if is_member == 1 then

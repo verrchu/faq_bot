@@ -1,4 +1,4 @@
-use std::{fs::File, net::Ipv4Addr, path::PathBuf, time::Duration};
+use std::{fs::File, path::PathBuf, time::Duration};
 
 use super::bot;
 
@@ -6,18 +6,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-    pub db: DbConfig,
     #[serde(with = "humantime_serde")]
     pub interval: Duration,
 
     pub bot: bot::Config,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DbConfig {
-    pub host: Ipv4Addr,
-    pub port: u16,
-    pub scripts_path: PathBuf,
 }
 
 impl Config {
