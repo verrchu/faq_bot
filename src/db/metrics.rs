@@ -3,7 +3,7 @@ use crate::metrics::REGISTRY;
 use once_cell::sync::Lazy;
 use prometheus::{Histogram, HistogramOpts};
 
-static POOL_ACCESS: Lazy<Histogram> = Lazy::new(|| {
+pub(super) static POOL_ACCESS: Lazy<Histogram> = Lazy::new(|| {
     Histogram::with_opts(HistogramOpts::new(
         "db:pool_access",
         "retrieve db connection from a pool",

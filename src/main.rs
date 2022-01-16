@@ -20,7 +20,11 @@ static TOKEN: Lazy<String> = Lazy::new(|| env::var("TOKEN").expect("TOKEN not pr
 use std::{env, io::stdout, path::PathBuf, sync::Arc};
 
 use anyhow::Context as _;
-use axum::{routing::get, AddExtensionLayer, Router, Server};
+use axum::{
+    extract,
+    routing::{get, post},
+    AddExtensionLayer, Router, Server,
+};
 use clap::Parser;
 use once_cell::sync::Lazy;
 use teloxide_core::{
@@ -69,15 +73,21 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn run(config: Config) -> anyhow::Result<()> {
-    let db = Db::connect(config.db).await?;
+    let db = Db::connect(config.db.clone()).await?;
     let tg = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
+
+    let context = Context::builder()
+        .db(db)
+        .tg(tg)
+        .config(Arc::new(config.clone()))
+        .build();
 
     metrics::register();
 
     let router = Router::new()
         .route("/metrics", get(metrics::gather))
-        .layer(AddExtensionLayer::new(db))
-        .layer(AddExtensionLayer::new(tg));
+        .route("/notify", post(process_update))
+        .layer(AddExtensionLayer::new(context));
 
     Server::bind(&config.http.bind)
         .serve(router.into_make_service())
@@ -85,7 +95,10 @@ async fn run(config: Config) -> anyhow::Result<()> {
         .context("http::bind")
 }
 
-pub async fn process_update(update: &Update, context: Context) -> anyhow::Result<()> {
+pub async fn process_update(
+    extract::Json(update): extract::Json<Update>,
+    extract::Extension(context): extract::Extension<Context>,
+) {
     let span = tracing::info_span!("update", id = Ulid::new().to_string().as_str());
 
     let block = async {
@@ -99,5 +112,7 @@ pub async fn process_update(update: &Update, context: Context) -> anyhow::Result
         }
     };
 
-    block.instrument(span).await
+    if let Err(err) = block.instrument(span).await {
+        tracing::error!("failed to process event: {:?}", err);
+    }
 }
