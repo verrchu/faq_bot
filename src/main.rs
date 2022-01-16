@@ -72,8 +72,10 @@ async fn run(config: Config) -> anyhow::Result<()> {
     let db = Db::connect(config.db).await?;
     let tg = DefaultParseMode::new(Bot::new(&*TOKEN), ParseMode::MarkdownV2);
 
+    metrics::register();
+
     let router = Router::new()
-        .route("/metrics", get(|| async { metrics::render() }))
+        .route("/metrics", get(metrics::gather))
         .layer(AddExtensionLayer::new(db))
         .layer(AddExtensionLayer::new(tg));
 

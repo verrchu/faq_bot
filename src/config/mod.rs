@@ -5,7 +5,7 @@ mod feedback;
 pub use feedback::FeedbackConfig;
 
 mod http;
-pub use http::HttpConfig;
+pub use crate::config::http::HttpConfig;
 
 use std::{fs::File, path::PathBuf};
 

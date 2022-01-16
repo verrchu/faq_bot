@@ -1,3 +1,5 @@
+pub mod metrics;
+
 mod scripts;
 use scripts::Scripts;
 
@@ -22,7 +24,8 @@ impl Db {
     pub async fn connect(config: DbConfig) -> anyhow::Result<Self> {
         let pool = tokio::task::spawn_blocking(move || {
             let nodes = config.nodes.iter().map(ToString::to_string).collect();
-            let client = ClusterClient::open(nodes).context("db::connect: create cluster client")?;
+            let client =
+                ClusterClient::open(nodes).context("db::connect: create cluster client")?;
             Pool::builder()
                 .max_size(u32::from(config.pool_size))
                 .connection_timeout(config.connection_timeout)
