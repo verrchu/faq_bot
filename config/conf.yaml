@@ -1,5 +1,8 @@
 http:
   bind: 127.0.0.1:8888
+  tls:
+    cert: "./ssl/cert.pem"
+    key: "./ssl/key.pem"
 feedback:
   ack_ttl: 5s
   timeout: 30s

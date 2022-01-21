@@ -23,8 +23,9 @@ use anyhow::Context as _;
 use axum::{
     extract,
     routing::{get, post},
-    AddExtensionLayer, Router, Server,
+    AddExtensionLayer, Router,
 };
+use axum_server::tls_rustls::RustlsConfig;
 use clap::Parser;
 use once_cell::sync::Lazy;
 use teloxide_core::{
@@ -89,7 +90,11 @@ async fn run(config: Config) -> anyhow::Result<()> {
         .route("/notify", post(process_update))
         .layer(AddExtensionLayer::new(context));
 
-    Server::bind(&config.http.bind)
+    let tls = RustlsConfig::from_pem_file(&config.http.tls.cert, &config.http.tls.key)
+        .await
+        .context("init tls")?;
+
+    axum_server::bind_rustls(config.http.bind, tls)
         .serve(router.into_make_service())
         .await
         .context("http::bind")

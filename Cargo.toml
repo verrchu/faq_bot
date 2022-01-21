@@ -29,6 +29,7 @@ url = { version = "2", features = ["serde"] }
 axum = "0.4"
 prometheus = "0.13"
 http = "0.2"
+axum-server = { version = "0.3", features = ["tls-rustls"] }
 
 [dependencies.redis]
 version = "0.21"
