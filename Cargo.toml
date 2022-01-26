@@ -3,6 +3,9 @@ name = "help_desk_bot"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["openssl/vendored"]
+
 [dependencies]
 anyhow = "1"
 chrono = { version = "0.4", default-features = false, features = ["std"] }
@@ -30,8 +33,9 @@ axum = "0.4"
 prometheus = "0.13"
 http = "0.2"
 axum-server = { version = "0.3", features = ["tls-rustls"] }
+openssl = { version = "0.10", features = ["vendored"] }
 
 [dependencies.redis]
 version = "0.21"
 default-features = false
-features = ["cluster", "script", "streams", "r2d2"]
+features = ["cluster", "script", "streams", "r2d2", "tls"]
