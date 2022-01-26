@@ -4,8 +4,11 @@ pub use db::DbConfig;
 mod feedback;
 pub use feedback::FeedbackConfig;
 
+mod logs;
+pub use logs::LogsConfig;
+
 mod http;
-pub use crate::config::http::HttpConfig;
+pub use self::http::HttpConfig;
 
 use std::{fs::File, path::PathBuf};
 
@@ -17,6 +20,8 @@ pub struct Config {
     pub feedback: FeedbackConfig,
     pub db: DbConfig,
     pub http: HttpConfig,
+    #[serde(default)]
+    pub logs: LogsConfig,
 }
 
 impl Config {

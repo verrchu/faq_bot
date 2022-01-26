@@ -1,4 +1,5 @@
 /catalog
 /target
 /ssl
+/logs
 .env

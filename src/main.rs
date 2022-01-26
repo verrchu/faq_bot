@@ -1,6 +1,7 @@
 mod feedback;
 mod grid;
 mod l10n;
+mod logs;
 mod metrics;
 mod utils;
 
@@ -17,7 +18,7 @@ mod handlers;
 
 static TOKEN: Lazy<String> = Lazy::new(|| env::var("TOKEN").expect("TOKEN not provided"));
 
-use std::{env, io::stdout, path::PathBuf, sync::Arc};
+use std::{env, path::PathBuf, sync::Arc};
 
 use anyhow::Context as _;
 use axum::{
@@ -61,14 +62,14 @@ pub struct Context {
 async fn main() -> anyhow::Result<()> {
     let _ = dotenv::dotenv();
 
-    let (writer, _guard) = tracing_appender::non_blocking(stdout());
+    let args = Args::parse();
+    let config = Config::load(args.config)?;
+
+    let (writer, _guard) = tracing_appender::non_blocking(logs::writer(&config));
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .with_writer(writer)
         .init();
-
-    let args = Args::parse();
-    let config = Config::load(args.config)?;
 
     run(config).await
 }
