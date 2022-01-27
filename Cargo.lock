@@ -1333,8 +1333,7 @@ dependencies = [
 [[package]]
 name = "redis"
 version = "0.21.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a80b5f38d7f5a020856a0e16e40a9cfabf88ae8f0e4c2dcd8a3114c1e470852"
+source = "git+https://github.com/verrchu/redis-rs.git?branch=add-cluster-username#1493d3802574d21f3d0bdeae7cd6a906cbbd8e90"
 dependencies = [
  "async-trait",
  "combine",

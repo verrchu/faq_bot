@@ -2,4 +2,11 @@
 /target
 /ssl
 /logs
+/tmp
+/config
+
+/env/cluster/*.rdb
+/env/cluster/nodes*
+
+!/config/example
 .env

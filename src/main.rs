@@ -63,7 +63,7 @@ async fn main() -> anyhow::Result<()> {
     let _ = dotenv::dotenv();
 
     let args = Args::parse();
-    let config = Config::load(args.config)?;
+    let config = Config::load(args.config).context("config::load")?;
 
     let (writer, _guard) = tracing_appender::non_blocking(logs::writer(&config));
     tracing_subscriber::fmt()
@@ -91,14 +91,21 @@ async fn run(config: Config) -> anyhow::Result<()> {
         .route("/notify", post(process_update))
         .layer(AddExtensionLayer::new(context));
 
-    let tls = RustlsConfig::from_pem_file(&config.http.tls.cert, &config.http.tls.key)
-        .await
-        .context("init tls")?;
+    if let Some(tls) = &config.http.tls {
+        let tls = RustlsConfig::from_pem_file(&tls.cert, &tls.key)
+            .await
+            .context("init tls")?;
 
-    axum_server::bind_rustls(config.http.bind, tls)
-        .serve(router.into_make_service())
-        .await
-        .context("http::bind")
+        axum_server::bind_rustls(config.http.bind, tls)
+            .serve(router.into_make_service())
+            .await
+            .context("http::bind")
+    } else {
+        axum::Server::bind(&config.http.bind)
+            .serve(router.into_make_service())
+            .await
+            .context("http::bind")
+    }
 }
 
 pub async fn process_update(

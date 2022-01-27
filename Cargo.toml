@@ -39,3 +39,6 @@ openssl = { version = "0.10", features = ["vendored"] }
 version = "0.21"
 default-features = false
 features = ["cluster", "script", "streams", "r2d2", "tls"]
+
+[patch.crates-io]
+redis = { git = "https://github.com/verrchu/redis-rs.git", branch = "add-cluster-username" }

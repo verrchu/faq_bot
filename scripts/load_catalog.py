@@ -14,16 +14,8 @@ NAME_FILE = '_name'
 DATA_DIR = '_data'
 ROOT = '/'
 
-NODES = [
-        {'host': '127.0.0.1', 'port': 7000},
-        {'host': '127.0.0.1', 'port': 7001},
-        {'host': '127.0.0.1', 'port': 7002},
-        {'host': '127.0.0.1', 'port': 7003},
-        {'host': '127.0.0.1', 'port': 7004},
-        {'host': '127.0.0.1', 'port': 7005},
-]
-
 parser = ArgumentParser()
+parser.add_argument('--url', type=str, required=True)
 parser.add_argument('--dry-run', action='store_true')
 parser.add_argument('--path', type=str, required=True)
 parser.add_argument('--langs', nargs='+', default=['ru'])
@@ -37,7 +29,7 @@ args = parser.parse_args()
 DRY_RUN = args.dry_run
 LANGS = set(args.langs)
 
-db = RedisCluster(startup_nodes=NODES, decode_responses=True)
+db = RedisCluster.from_url(args.url, decode_responses=True)
 
 
 def process_root(dir):

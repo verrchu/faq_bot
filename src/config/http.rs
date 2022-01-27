@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 #[serde(deny_unknown_fields)]
 pub struct HttpConfig {
     pub bind: SocketAddr,
-    pub tls: TlsConfig,
+    #[serde(default)]
+    pub tls: Option<TlsConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
