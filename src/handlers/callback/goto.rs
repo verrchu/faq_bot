@@ -30,6 +30,7 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow:
         tracing::debug!("tg::send_message");
         tg.send_message(cb.from.id, header)
             .disable_web_page_preview(true)
+            .disable_notification(true)
             .reply_markup(keyboard)
             .send()
             .await
@@ -41,7 +42,6 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow:
 
         tracing::debug!("tg::edit_message_text");
         tg.edit_message_text(cb.from.id, message_id, header)
-            .disable_web_page_preview(true)
             .reply_markup(keyboard)
             .send()
             .await
