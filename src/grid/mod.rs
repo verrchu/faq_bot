@@ -4,8 +4,8 @@ mod feedback;
 mod navigation;
 pub use navigation::Navigation;
 
-mod goto;
-pub use goto::goto;
+mod render_menu;
+pub use render_menu::render_menu;
 
-mod init;
-pub use init::init;
+mod render_data;
+pub use render_data::render_data;

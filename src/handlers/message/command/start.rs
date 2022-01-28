@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{grid, Context};
 
 use teloxide_core::{
@@ -12,7 +14,7 @@ pub async fn handle(user: &User, context: Context) -> anyhow::Result<()> {
 
     tracing::info!("processing command /start");
 
-    let (header, keyboard) = grid::init(context)
+    let (header, keyboard) = grid::render_menu(PathBuf::from("/"), context)
         .instrument(tracing::info_span!("grid_init"))
         .await?;
 

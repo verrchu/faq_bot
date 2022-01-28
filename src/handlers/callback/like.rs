@@ -21,9 +21,9 @@ pub async fn handle(cb: &CallbackQuery, hash: &str, context: Context) -> anyhow:
 
     let liked = db::grid::toggle_like(context.db.clone(), key_str.to_string(), cb.from.id).await?;
 
-    let (header, keyboard) = grid::goto(key.clone(), false, context)
+    let (header, keyboard) = grid::render_data(key.clone(), false, context)
         .instrument(tracing::info_span!(
-            "grid::goto",
+            "grid::render_data",
             key = key.to_str().unwrap()
         ))
         .await?;
