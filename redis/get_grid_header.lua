@@ -22,5 +22,8 @@ else
         header = header .. ' / ' .. name
     end
 
-    return string.gsub(header, '^%s*(.-)%s*$', '%1')
+    local header = string.gsub(header, '^%s*(.-)%s*$', '%1')
+    local header = string.gsub(header, '([-*~`>#+=|.!(){}%[%]])', '\\%1')
+
+    return header
 end

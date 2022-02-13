@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, ops::DerefMut};
 
-use crate::{utils, DataEntry, Db};
+use crate::{DataEntry, Db};
 
 use anyhow::Context;
 use function_name::named;
@@ -115,17 +115,20 @@ pub async fn get_data_entry(db: Db, key: String, lang: String) -> anyhow::Result
     tokio::task::spawn_blocking(move || {
         let mut conn = db.pool.get().context("get db connection from pool")?;
 
-        let (data, created, likes, views): (String, u32, u32, u32) = redis::cluster::cluster_pipe()
-            .get(format!("{{l10n:{lang}}}:{key}:data"))
-            .get(format!("{{l10n:none}}:{key}:created"))
-            .scard(format!("{{l10n:none}}:{key}:likes"))
-            .get(format!("{{l10n:none}}:{key}:views"))
-            .query(conn.deref_mut())
-            .context(format!("db::grid::{}", function_name!()))?;
+        let (data, created, updated, likes, views): (String, String, Option<String>, u32, u32) =
+            redis::cluster::cluster_pipe()
+                .get(format!("{{l10n:{lang}}}:{key}:data"))
+                .get(format!("{{l10n:none}}:{key}:created"))
+                .get(format!("{{l10n:none}}:{key}:updated"))
+                .scard(format!("{{l10n:none}}:{key}:likes"))
+                .get(format!("{{l10n:none}}:{key}:views"))
+                .query(conn.deref_mut())
+                .context(format!("db::grid::{}", function_name!()))?;
 
         Ok(DataEntry::builder()
             .text(data)
-            .created(utils::unixtime_to_datetime(created))
+            .created(created)
+            .updated(updated)
             .likes(likes)
             .views(views)
             .build())

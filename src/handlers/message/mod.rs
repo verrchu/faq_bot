@@ -29,6 +29,21 @@ pub async fn handle(msg: &Message, context: Context) -> anyhow::Result<()> {
                     .instrument(span)
                     .await?;
             }
+            "/list" => {
+                crate::feedback::cancel(user.id, context.clone()).await?;
+
+                let span = tracing::info_span!(
+                    "handle_command",
+                    username,
+                    command = "/list",
+                    msg.id,
+                    lang
+                );
+
+                command::list::handle(user, context)
+                    .instrument(span)
+                    .await?;
+            }
             text => {
                 let span = tracing::info_span!("handle_message", username, msg.id, lang);
 

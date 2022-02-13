@@ -1,4 +1,4 @@
-mod callback;
+pub mod callback;
 mod feedback;
 
 mod navigation;

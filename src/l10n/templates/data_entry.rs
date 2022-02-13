@@ -9,6 +9,9 @@ static RU: &str = r#"
 {{ data_entry.text }}
 
 *_Опубликовано: {{ data_entry.created }}_*
+{% if data_entry.updated -%}
+*_Обновлено: {{ data_entry.created }}_*
+{%- endif %}
 *_Просмотрено: {{ data_entry.views }}_*
 "#;
 

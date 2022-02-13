@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import os
+import re
 import sys
 import logging
 import yaml
@@ -11,6 +12,7 @@ from rediscluster import RedisCluster
 from time import time
 
 NAME_FILE = '_name'
+META_FILE = '_meta'
 DATA_DIR = '_data'
 ROOT = '/'
 
@@ -89,6 +91,11 @@ def process_child(dir, base_dir):
         abort(f'{dir} has no child entries')
 
     if DATA_DIR in dir_entries:
+        if not META_FILE in dir_entries:
+            abort(f'{dir} has no _meta file')
+        load_meta(dir, base_dir)
+        dir_entries.remove(META_FILE)
+
         data_dir = os.path.join(dir, DATA_DIR)
         dir_entries.remove(DATA_DIR)
         if not os.path.isdir(data_dir):
@@ -100,27 +107,42 @@ def process_child(dir, base_dir):
         DRY_RUN or db.sadd('data_entries', root_path)
 
         load_data(data_dir, base_dir)
+    else:
+        for entry in dir_entries:
+            logging.debug(f'adding {entry} to {root_path}:next')
 
-    for entry in dir_entries:
-        logging.debug(f'adding {entry} to {root_path}:next')
+            segment = entry
+            key = os.path.join(root_path, entry)
 
-        segment = entry
-        key = os.path.join(root_path, entry)
+            entry = os.path.join(dir, entry)
+            if not os.path.isdir(entry):
+                abort(f'{entry} is not a directory')
 
-        entry = os.path.join(dir, entry)
-        if not os.path.isdir(entry):
-            abort(f'{entry} is not a directory')
+            process_child(entry, base_dir)
 
-        process_child(entry, base_dir)
+            if not DRY_RUN:
+                for lang in LANGS:
+                    segment_name = db.get(f'{{l10n:{lang}}}:{segment}:name')
+                    key_icon = db.get(f'{{l10n:none}}:{key}:icon')
 
-        if not DRY_RUN:
-            for lang in LANGS:
-                segment_name = db.get(f'{{l10n:{lang}}}:{segment}:name')
-                key_icon = db.get(f'{{l10n:none}}:{key}:icon')
+                    l10n = f'{key_icon} {segment_name}' if key_icon else segment_name
 
-                l10n = f'{key_icon} {segment_name}' if key_icon else segment_name
+                    db.hset(f'{{l10n:{lang}}}:{root_path}:next', key, l10n)
 
-                db.hset(f'{{l10n:{lang}}}:{root_path}:next', key, l10n)
+
+def load_meta(dir, base_dir):
+    root_path = get_root_path(dir, base_dir)
+    meta = load_yaml(os.path.join(dir, META_FILE))
+    if not 'created' in meta:
+        abort(f'{dir} _meta has no "created" fireld')
+    else:
+        if not re.match(r"^\d{4}/\d{2}/\d{2}$", meta['created']):
+            abort(f'{dir} _meta has malformed "created" fireld')
+        DRY_RUN or db.set(f'{{l10n:none}}:{root_path}:created', meta['created'])
+    if 'updated' in meta:
+        if not re.match(r"^\d{4}/\d{2}/\d{2}$", meta['updated']):
+            abort(f'{dir} _meta has malformed "updated" fireld')
+        DRY_RUN or db.set(f'{{l10n:none}}:{root_path}:updated', meta['updated'])
 
 
 def load_data(data_dir, base_dir):
@@ -128,7 +150,6 @@ def load_data(data_dir, base_dir):
     logging.info(f'loading data for {root_path}')
     data_entries = set(os.listdir(data_dir))
 
-    DRY_RUN or db.setnx(f'{{l10n:none}}:{root_path}:created', unixtime())
     DRY_RUN or db.setnx(f'{{l10n:none}}:{root_path}:views', 0)
 
     for entry in data_entries:
@@ -233,10 +254,6 @@ def abort(reason):
 
 def hash(input):
     return md5(input.encode('utf-8')).hexdigest()
-
-
-def unixtime():
-    return int(time())
 
 
 if __name__ == '__main__':

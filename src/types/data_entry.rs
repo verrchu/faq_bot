@@ -5,6 +5,7 @@ use typed_builder::TypedBuilder;
 pub struct DataEntry {
     pub text: String,
     pub created: String,
+    pub updated: Option<String>,
     pub views: u32,
     pub likes: u32,
 }

@@ -1,5 +1,6 @@
 mod feedback;
 mod grid;
+mod greeting;
 mod l10n;
 mod logs;
 mod metrics;
