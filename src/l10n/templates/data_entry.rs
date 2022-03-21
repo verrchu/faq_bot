@@ -10,7 +10,7 @@ static RU: &str = r#"
 
 *_Опубликовано: {{ data_entry.created }}_*
 {% if data_entry.updated -%}
-*_Обновлено: {{ data_entry.created }}_*
+*_Обновлено: {{ data_entry.updated }}_*
 {%- endif %}
 *_Просмотрено: {{ data_entry.views }}_*
 "#;
